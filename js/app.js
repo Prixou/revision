@@ -6,13 +6,26 @@
   var MASTERED_BOX = 4;
   var SESSION_SIZE = 20;
   var NEW_PER_DAY = 20; // nouvelles cartes introduites par jour (évite d'afficher des centaines de cartes « à réviser »)
-  var PAGE = 60; // cartes affichées par page dans « Mes cartes »
+  var PAGE = 60; // éléments affichés par page dans la bibliothèque
   var QUIZ_SIZE = 10;
+  var EXAM_SIZE = 20;
+  var EXAM_MINUTES = 30;
   var SWIPE_MIN = 70; // px
 
   var UES = window.DCG_UES;
   var SHORT = window.DCG_UE_SHORT || {};
   var app = document.getElementById('app');
+
+  // Types de cartes : '' (question), 'cloze' (à trous), 'calc' (calcul), 'ecr' (écriture), 'formule'
+  var KINDS = [
+    { key: '', label: 'Tous les types' },
+    { key: 'q', label: 'Questions' },
+    { key: 'cloze', label: '📝 À trous' },
+    { key: 'calc', label: '🧮 Calculs' },
+    { key: 'ecr', label: '✍️ Écritures' },
+    { key: 'formule', label: '🧩 Formules' }
+  ];
+  var KIND_BADGE = { cloze: '📝 À trous', calc: '🧮 Calcul', ecr: '✍️ Écriture', formule: '🧩 Formule' };
 
   // ---------- Stockage ----------
 
@@ -81,9 +94,11 @@
     app.textContent = '';
     app.appendChild(node);
     if (!keepScroll) window.scrollTo(0, 0);
-    // Centre la pastille active dans la rangée défilante
-    var on = app.querySelector('.chip.on');
-    if (on && on.parentNode) on.parentNode.scrollLeft = on.offsetLeft - (on.parentNode.clientWidth - on.offsetWidth) / 2;
+    // Centre la pastille active dans chaque rangée défilante
+    Array.prototype.forEach.call(app.querySelectorAll('.chips'), function (row) {
+      var on = row.querySelector('.chip.on');
+      if (on) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+    });
   }
 
   function ueLabel(ue) { return UES[ue] ? 'UE ' + ue + ' · ' + UES[ue] : 'UE ' + ue; }
@@ -93,18 +108,21 @@
     return item.d ? h('div', { class: 'dated' }, '📅 ' + item.d) : null;
   }
 
-  // Rangée de pastilles défilante pour filtrer par UE (adaptée au pouce)
-  function ueChips(selected, onPick) {
+  function chipRow(options, selected, onPick) {
     var box = h('div', { class: 'chips' });
-    function chip(val, label) {
-      var on = String(selected) === String(val);
-      return h('button', { class: 'chip' + (on ? ' on' : ''), type: 'button', 'aria-pressed': on ? 'true' : 'false', onclick: function () { if (!on) onPick(val); } }, label);
-    }
-    box.appendChild(chip('', 'Toutes'));
-    Object.keys(UES).forEach(function (k) {
-      box.appendChild(chip(k, 'UE ' + k + ' · ' + (SHORT[k] || UES[k])));
+    options.forEach(function (o) {
+      var on = String(selected) === String(o.key);
+      box.appendChild(h('button', { class: 'chip' + (on ? ' on' : ''), type: 'button', 'aria-pressed': on ? 'true' : 'false',
+        onclick: function () { if (!on) onPick(o.key); } }, o.label));
     });
     return box;
+  }
+
+  // Rangée de pastilles défilante pour filtrer par UE (adaptée au pouce)
+  function ueChips(selected, onPick) {
+    var opts = [{ key: '', label: 'Toutes' }];
+    Object.keys(UES).forEach(function (k) { opts.push({ key: k, label: 'UE ' + k + ' · ' + (SHORT[k] || UES[k]) }); });
+    return chipRow(opts, selected, onPick);
   }
 
   function ueSelect(id, selected) {
@@ -115,11 +133,29 @@
     return sel;
   }
 
+  function seg(items) {
+    return h('div', { class: 'seg seg' + items.length }, items.map(function (it) {
+      return h('a', { class: 'seg-btn' + (it.on ? ' on' : ''), href: it.href }, it.label);
+    }));
+  }
+
   // ---------- Données ----------
 
   // Seules les UE suivies sont proposées (on ignore d'éventuelles cartes d'autres UE)
   function allCards() {
     return window.DCG_CARDS.concat(state.custom).filter(function (c) { return UES[c.ue]; });
+  }
+
+  function kindOf(c) { return c.cloze ? 'cloze' : (c.kind || ''); }
+
+  function matchesKind(c, kind) {
+    if (!kind) return true;
+    if (kind === 'q') return !kindOf(c);
+    return kindOf(c) === kind;
+  }
+
+  function cardsFor(ue, kind) {
+    return allCards().filter(function (c) { return (!ue || String(c.ue) === String(ue)) && matchesKind(c, kind); });
   }
 
   // Fiches de cours détaillées (lecture), reliées aux flashcards par le champ n
@@ -129,10 +165,6 @@
   function noteOf(id) {
     if (!noteIndex) { noteIndex = {}; allNotes().forEach(function (n) { noteIndex[n.id] = n; }); }
     return noteIndex[id] || null;
-  }
-
-  function cardsFor(ue) {
-    return allCards().filter(function (c) { return !ue || String(c.ue) === String(ue); });
   }
 
   function isReviewDue(card) {
@@ -148,8 +180,8 @@
   }
 
   // File du jour : révisions échues + nouvelles cartes dans la limite quotidienne
-  function queueFor(ue) {
-    var list = cardsFor(ue);
+  function queueFor(ue, kind) {
+    var list = cardsFor(ue, kind);
     var allowed = Math.max(0, NEW_PER_DAY - newIntroducedToday());
     var fresh = list.filter(isNewCard);
     return {
@@ -189,7 +221,7 @@
 
   function viewHome() {
     var cards = allCards();
-    var q = queueFor('');
+    var q = queueFor('', '');
     var dueCount = q.reviews.length + q.fresh.length;
     var seenToday = state.log[today()] || 0;
 
@@ -208,8 +240,16 @@
       ? h('a', { class: 'btn primary big block', href: '#/review' }, 'Réviser mes flashcards · ' + Math.min(dueCount, SESSION_SIZE))
       : h('p', { class: 'muted' }, q.freshTotal ? 'Objectif du jour atteint 🎉 Fais un QCM ou reviens demain pour de nouvelles cartes.' : 'Rien à réviser pour le moment 🎉 Fais un QCM ou ajoute des cartes.');
 
+    var quick = h('div', { class: 'quick' },
+      h('a', { class: 'btn', href: reviewHash('', 'cloze') }, '📝 À trous'),
+      h('a', { class: 'btn', href: reviewHash('', 'calc') }, '🧮 Calculs'),
+      h('a', { class: 'btn', href: reviewHash('', 'ecr') }, '✍️ Écritures'),
+      h('a', { class: 'btn', href: cardsHash('formules', '') }, '🧩 Formulaire'),
+      h('a', { class: 'btn', href: quizHash('exam', '') }, '⏱️ Examen blanc'),
+      h('a', { class: 'btn', href: quizHash('errors', '') }, '🎯 Mes erreurs'));
+
     var rows = Object.keys(UES).map(function (k) {
-      var list = cardsFor(k);
+      var list = cardsFor(k, '');
       var mastered = list.filter(function (c) {
         var p = state.progress[c.id];
         return p && p.box >= MASTERED_BOX;
@@ -224,8 +264,8 @@
         h('div', { class: 'bar', role: 'img', 'aria-label': pct + ' % maîtrisé' }, h('span', { style: 'width:' + pct + '%' })),
         h('div', { class: 'ue-meta' }, list.length ? (mastered + '/' + list.length + ' maîtrisées · ' + dueN + ' à revoir · ' + newN + ' nouvelles') : 'Aucune carte'),
         h('div', { class: 'ue-actions' },
-          list.length ? h('a', { class: 'btn', href: '#/review?ue=' + k }, 'Flashcards') : null,
-          qcmFor(k).length ? h('a', { class: 'btn', href: '#/quiz?ue=' + k }, 'QCM') : null
+          list.length ? h('a', { class: 'btn', href: reviewHash(k, '') }, 'Flashcards') : null,
+          qcmFor(k).length ? h('a', { class: 'btn', href: quizHash('quick', k) }, 'QCM') : null
         )
       );
     });
@@ -239,7 +279,7 @@
       : null;
 
     render(h('div', null,
-      tiles, cta, detail,
+      tiles, cta, detail, quick,
       h('h2', null, 'Progression par UE'),
       h('div', { class: 'ue-list' }, rows),
       info
@@ -250,9 +290,7 @@
     return h('div', { class: 'tile' }, h('div', { class: 'tile-v' }, String(value)), h('div', { class: 'tile-l' }, label));
   }
 
-  // ---------- Fiches (répétition espacée) ----------
-
-  var session = null;
+  // ---------- Paramètres d'URL ----------
 
   function params() {
     var q = location.hash.split('?')[1] || '';
@@ -265,30 +303,62 @@
     return out;
   }
 
-  function goUe(base) {
-    return function (val) { location.hash = base + (val ? '?ue=' + val : ''); };
+  function hashOf(base, obj) {
+    var q = [];
+    Object.keys(obj).forEach(function (k) { if (obj[k]) q.push(k + '=' + encodeURIComponent(obj[k])); });
+    return base + (q.length ? '?' + q.join('&') : '');
+  }
+
+  function reviewHash(ue, kind) { return hashOf('#/review', { ue: ue, kind: kind }); }
+  function quizHash(mode, ue) { return hashOf('#/quiz', { mode: mode === 'quick' ? '' : mode, ue: ue }); }
+  function cardsHash(mode, ue) { return hashOf('#/cards', { mode: mode === 'cards' ? '' : mode, ue: ue }); }
+
+  // ---------- Flashcards (répétition espacée) ----------
+
+  var session = null;
+
+  var CLOZE_RE = /\{\{([\s\S]*?)\}\}/g;
+
+  // Texte à trous : masqué ([…]) avant la réponse, mis en évidence après
+  function clozeNodes(text, reveal) {
+    var out = [], last = 0, m;
+    CLOZE_RE.lastIndex = 0;
+    while ((m = CLOZE_RE.exec(text)) !== null) {
+      if (m.index > last) out.push(text.slice(last, m.index));
+      out.push(h('span', { class: reveal ? 'cloze-hit' : 'cloze-blank' }, reveal ? m[1] : '[…]'));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) out.push(text.slice(last));
+    return out;
   }
 
   function viewReview() {
     var ue = params().ue || '';
     if (ue && !UES[ue]) ue = '';
-    var q = queueFor(ue);
+    var kind = params().kind || '';
+
+    var q = queueFor(ue, kind);
     var due = shuffle(q.reviews).concat(q.fresh); // les révisions d'abord, puis les nouvelles
-    var chips = ueChips(ue, goUe('#/review'));
+
+    // Rangée de types, limitée aux types qui existent pour cette UE
+    var kindOpts = KINDS.filter(function (k) { return !k.key || cardsFor(ue, k.key).length; });
+    var head = h('div', null,
+      ueChips(ue, function (val) { location.hash = reviewHash(val, kind); }),
+      kindOpts.length > 2 ? chipRow(kindOpts, kind, function (val) { location.hash = reviewHash(ue, val); }) : null);
 
     if (!due.length) {
       session = null;
       render(h('div', null,
-        chips,
+        head,
         h('div', { class: 'card-empty' }, q.freshTotal
           ? 'Objectif du jour atteint (' + NEW_PER_DAY + ' nouvelles cartes). Reviens demain, ou fais un QCM.'
-          : 'Aucune carte à réviser ici pour le moment. Reviens demain, ou choisis une autre UE.'),
+          : 'Aucune carte à réviser ici pour le moment. Reviens demain, ou choisis une autre UE ou un autre type.'),
         h('p', null, h('a', { class: 'btn', href: '#/' }, 'Retour à l\'accueil'))
       ));
       return;
     }
 
-    session = { queue: due.slice(0, SESSION_SIZE), shown: false, done: 0, total: Math.min(due.length, SESSION_SIZE), good: 0, ue: ue, chips: chips };
+    session = { queue: due.slice(0, SESSION_SIZE), shown: false, showNote: false, done: 0, total: Math.min(due.length, SESSION_SIZE), good: 0, ue: ue, kind: kind, head: head };
     renderCard();
   }
 
@@ -298,12 +368,21 @@
     var card = s.queue[0];
     var note = card.n ? noteOf(card.n) : null;
     var pct = Math.round(100 * s.done / s.total);
+    var badge = KIND_BADGE[kindOf(card)];
+
+    var body;
+    if (card.cloze) {
+      body = [h('div', { class: 'flash-q' }, clozeNodes(card.t, s.shown)),
+        s.shown ? datedNote(card) : h('div', { class: 'flash-hint' }, 'Touche la carte pour compléter les trous')];
+    } else {
+      body = [h('div', { class: 'flash-q' }, card.q),
+        s.shown ? h('div', { class: 'flash-a' }, card.a, datedNote(card)) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse')];
+    }
 
     var face = h('div', { class: 'flash' + (s.shown ? ' open' : ''), role: 'button', tabindex: '0',
         'aria-label': s.shown ? 'Réponse affichée' : 'Toucher pour voir la réponse', onclick: function () { if (!session.shown) reveal(); } },
-      h('div', { class: 'flash-ue' }, ueLabel(card.ue)),
-      h('div', { class: 'flash-q' }, card.q),
-      s.shown ? h('div', { class: 'flash-a' }, card.a, datedNote(card)) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse'),
+      h('div', { class: 'flash-ue' }, ueLabel(card.ue) + (badge ? ' · ' + badge : '')),
+      body,
       s.shown && note ? h('div', { class: 'note-box' },
         h('button', { class: 'btn small', type: 'button', onclick: function (e) { e.stopPropagation(); s.showNote = !s.showNote; renderCard(); } },
           s.showNote ? 'Masquer la fiche de cours' : '📖 Fiche de cours'),
@@ -320,7 +399,7 @@
           h('button', { class: 'btn primary big block', onclick: reveal }, 'Afficher la réponse', h('kbd', null, 'Espace')));
 
     render(h('div', null,
-      s.chips,
+      s.head,
       h('div', { class: 'progress-line' },
         h('div', { class: 'bar' }, h('span', { style: 'width:' + pct + '%' })),
         h('span', { class: 'muted' }, s.done + '/' + s.total)),
@@ -385,61 +464,116 @@
       h('h1', null, 'Session terminée'),
       h('p', null, s.good + ' cartes sues du premier coup sur ' + s.total + '.'),
       h('div', { class: 'stack' },
-        h('a', { class: 'btn primary big block', href: '#/review' + (s.ue ? '?ue=' + s.ue : ''), onclick: function () { setTimeout(route, 0); } }, 'Continuer'),
+        h('a', { class: 'btn primary big block', href: reviewHash(s.ue, s.kind), onclick: function () { setTimeout(route, 0); } }, 'Continuer'),
         h('a', { class: 'btn block', href: '#/' }, 'Accueil'))
     ));
   }
 
-  // ---------- QCM ----------
+  // ---------- QCM : rapide, examen blanc, mes erreurs ----------
 
   var quiz = null;
+  var quizTimer = null;
 
   function qcmFor(ue) {
     return window.DCG_QCM.filter(function (q) { return UES[q.ue] && (!ue || String(q.ue) === String(ue)); });
   }
 
+  function stopTimer() { if (quizTimer) { clearInterval(quizTimer); quizTimer = null; } }
+
+  // On mélange l'ordre des choix : sinon la bonne réponse se devine à sa position
+  function withShuffledChoices(q) {
+    var order = shuffle(q.choices.map(function (_, i) { return i; }));
+    return Object.assign({}, q, {
+      choices: order.map(function (i) { return q.choices[i]; }),
+      answer: order.indexOf(q.answer)
+    });
+  }
+
+  function isWeak(q) {
+    var r = state.qcm[q.id];
+    return !!r && r.ko > r.ok;
+  }
+
   function viewQuiz() {
+    stopTimer();
     var ue = params().ue || '';
     if (ue && !UES[ue]) ue = '';
+    var mode = params().mode === 'exam' ? 'exam' : (params().mode === 'errors' ? 'errors' : 'quick');
+    var chips = ueChips(ue, function (val) { location.hash = quizHash(mode, val); });
+    var tabs = seg([
+      { label: 'QCM rapide', on: mode === 'quick', href: quizHash('quick', ue) },
+      { label: 'Examen blanc', on: mode === 'exam', href: quizHash('exam', ue) },
+      { label: 'Mes erreurs', on: mode === 'errors', href: quizHash('errors', ue) }]);
+    var head = h('div', null, tabs, chips);
+
     var pool = qcmFor(ue);
-    var chips = ueChips(ue, goUe('#/quiz'));
+    if (mode === 'errors') pool = pool.filter(isWeak);
 
     if (!pool.length) {
       quiz = null;
-      render(h('div', null, chips, h('div', { class: 'card-empty' }, 'Pas encore de QCM pour cette UE.')));
+      render(h('div', null, head, h('div', { class: 'card-empty' }, mode === 'errors'
+        ? 'Aucune erreur à retravailler pour le moment : bravo, ou fais d\'abord quelques QCM.'
+        : 'Pas encore de QCM pour cette UE.')));
       return;
     }
 
-    // On mélange aussi l'ordre des choix : sinon la bonne réponse se devine à sa position
-    var qs = shuffle(pool).slice(0, QUIZ_SIZE).map(function (q) {
-      var order = shuffle(q.choices.map(function (_, i) { return i; }));
-      return Object.assign({}, q, {
-        choices: order.map(function (i) { return q.choices[i]; }),
-        answer: order.indexOf(q.answer)
-      });
-    });
-    quiz = { qs: qs, i: 0, score: 0, picked: null, chips: chips, ue: ue };
+    var size = mode === 'exam' ? EXAM_SIZE : QUIZ_SIZE;
+    var qs = shuffle(pool).slice(0, size).map(withShuffledChoices);
+    quiz = { mode: mode, qs: qs, i: 0, score: 0, picked: null, head: head, ue: ue, answers: [], phase: mode === 'exam' ? 'intro' : 'run', deadline: 0 };
+
+    if (mode === 'exam') {
+      render(h('div', null, head,
+        h('div', { class: 'intro' },
+          h('h1', null, 'Examen blanc'),
+          h('p', null, qs.length + ' questions · ' + EXAM_MINUTES + ' minutes · ' + (ue ? ueLabel(ue) : 'toutes les UE')),
+          h('p', { class: 'muted' }, 'Pas de correction pendant l\'épreuve : tu verras ton score, le détail par UE et les corrections à la fin.')),
+        h('div', { class: 'dock' }, h('button', { class: 'btn primary big block', onclick: startExam }, 'Commencer'))));
+      return;
+    }
     renderQuestion();
+  }
+
+  function startExam() {
+    quiz.phase = 'run';
+    quiz.deadline = Date.now() + EXAM_MINUTES * 60000;
+    stopTimer();
+    quizTimer = setInterval(tick, 1000);
+    renderQuestion();
+  }
+
+  function tick() {
+    if (!quiz || quiz.phase !== 'run' || quiz.mode !== 'exam') { stopTimer(); return; }
+    var left = Math.max(0, quiz.deadline - Date.now());
+    var el = document.getElementById('timer');
+    if (el) el.textContent = '⏱ ' + pad(Math.floor(left / 60000)) + ':' + pad(Math.floor(left / 1000) % 60);
+    if (left <= 0) finishExam();
   }
 
   function renderQuestion() {
     var z = quiz;
-    if (z.i >= z.qs.length) { renderQuizEnd(); return; }
+    if (z.i >= z.qs.length) { z.mode === 'exam' ? finishExam() : renderQuizEnd(); return; }
     var q = z.qs[z.i];
     var pct = Math.round(100 * z.i / z.qs.length);
+    var exam = z.mode === 'exam';
 
     var opts = q.choices.map(function (c, idx) {
       var cls = 'choice';
-      if (z.picked != null) {
+      if (exam) {
+        if (z.picked === idx) cls += ' sel';
+      } else if (z.picked != null) {
         if (idx === q.answer) cls += ' right';
         else if (idx === z.picked) cls += ' wrong';
       }
-      return h('button', { class: cls, disabled: z.picked != null, onclick: function () { pick(idx); } },
+      return h('button', { class: cls, disabled: !exam && z.picked != null, onclick: function () { pick(idx); } },
         h('span', { class: 'letter' }, String.fromCharCode(65 + idx)), h('span', null, c));
     });
 
     var feedback = null, dock = null;
-    if (z.picked != null) {
+    if (exam) {
+      dock = h('div', { class: 'dock' },
+        h('button', { class: 'btn primary big block', disabled: z.picked == null, onclick: validateExam },
+          z.i + 1 < z.qs.length ? 'Valider et continuer' : 'Valider et terminer'));
+    } else if (z.picked != null) {
       var ok = z.picked === q.answer;
       feedback = h('div', { class: 'feedback ' + (ok ? 'ok' : 'ko') }, h('strong', null, ok ? 'Bonne réponse ! ' : 'Raté. '), q.expl, datedNote(q));
       dock = h('div', { class: 'dock' },
@@ -447,24 +581,34 @@
     }
 
     render(h('div', null,
-      z.chips,
+      exam ? null : z.head,
       h('div', { class: 'progress-line' },
         h('div', { class: 'bar' }, h('span', { style: 'width:' + pct + '%' })),
+        exam ? h('span', { class: 'timer', id: 'timer' }, '⏱ …') : null,
         h('span', { class: 'muted' }, (z.i + 1) + '/' + z.qs.length)),
       h('div', { class: 'flash-ue' }, ueLabel(q.ue)),
       h('div', { class: 'quiz-q' }, q.q),
       h('div', { class: 'choices' }, opts),
       feedback, dock
     ), true);
+    if (exam) tick();
+  }
+
+  function record(q, idx) {
+    var rec = state.qcm[q.id] || { ok: 0, ko: 0 };
+    var good = idx === q.answer;
+    if (good) rec.ok++; else rec.ko++;
+    state.qcm[q.id] = rec;
+    logReview();
+    return good;
   }
 
   function pick(idx) {
-    var q = quiz.qs[quiz.i];
-    quiz.picked = idx;
-    var rec = state.qcm[q.id] || { ok: 0, ko: 0 };
-    if (idx === q.answer) { quiz.score++; rec.ok++; vibrate(10); } else { rec.ko++; vibrate(40); }
-    state.qcm[q.id] = rec;
-    logReview();
+    var z = quiz;
+    if (z.mode === 'exam') { z.picked = idx; renderQuestion(); return; }
+    var q = z.qs[z.i];
+    z.picked = idx;
+    if (record(q, idx)) { z.score++; vibrate(10); } else { vibrate(40); }
     save();
     renderQuestion();
     var fb = app.querySelector('.feedback');
@@ -473,47 +617,108 @@
 
   function next() { quiz.i++; quiz.picked = null; renderQuestion(); window.scrollTo(0, 0); }
 
+  function validateExam() {
+    var z = quiz;
+    if (z.picked == null) return;
+    var q = z.qs[z.i];
+    z.answers.push({ q: q, picked: z.picked });
+    if (record(q, z.picked)) z.score++;
+    save();
+    z.i++; z.picked = null;
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function finishExam() {
+    var z = quiz;
+    if (!z || z.phase === 'end') return;
+    stopTimer();
+    z.phase = 'end';
+    // Questions non répondues (temps écoulé) comptées fausses mais sans modifier les statistiques
+    var answered = z.answers.length;
+    var rows = z.qs.map(function (q, i) { return i < answered ? z.answers[i] : { q: q, picked: null }; });
+    var byUe = {};
+    rows.forEach(function (r) {
+      var k = r.q.ue;
+      byUe[k] = byUe[k] || { ok: 0, n: 0 };
+      byUe[k].n++;
+      if (r.picked === r.q.answer) byUe[k].ok++;
+    });
+    var total = rows.filter(function (r) { return r.picked === r.q.answer; }).length;
+    var mistakes = rows.filter(function (r) { return r.picked !== r.q.answer; });
+    var note20 = Math.round(20 * total / rows.length * 10) / 10;
+
+    render(h('div', null,
+      h('div', { class: 'center end' },
+        h('div', { class: 'big-emoji' }, total === rows.length ? '🎯' : '📊'),
+        h('h1', null, total + ' / ' + rows.length),
+        h('p', { class: 'muted' }, 'Soit ' + note20 + ' / 20' + (answered < rows.length ? ' · temps écoulé' : ''))),
+      h('h2', null, 'Détail par UE'),
+      h('div', { class: 'ue-list' }, Object.keys(byUe).map(function (k) {
+        var r = byUe[k];
+        return h('div', { class: 'ue-row' }, h('div', { class: 'ue-head' },
+          h('div', { class: 'ue-name' }, h('strong', null, 'UE ' + k), ' ', UES[k]),
+          h('div', { class: 'ue-pct' }, r.ok + '/' + r.n)));
+      })),
+      mistakes.length ? h('h2', null, 'Corrections (' + mistakes.length + ')') : null,
+      h('div', { class: 'card-list' }, mistakes.map(function (r) {
+        return h('div', { class: 'row' }, h('div', { class: 'row-main' },
+          h('div', { class: 'flash-ue' }, ueLabel(r.q.ue)),
+          h('div', null, h('strong', null, r.q.q)),
+          r.picked != null ? h('div', { class: 'wrong-line' }, 'Ta réponse : ' + r.q.choices[r.picked]) : h('div', { class: 'wrong-line' }, 'Sans réponse'),
+          h('div', { class: 'right-line' }, 'Bonne réponse : ' + r.q.choices[r.q.answer]),
+          h('div', { class: 'muted' }, r.q.expl),
+          datedNote(r.q)));
+      })),
+      h('div', { class: 'stack' },
+        h('a', { class: 'btn primary big block', href: quizHash('exam', z.ue), onclick: function () { setTimeout(route, 0); } }, 'Refaire un examen'),
+        h('a', { class: 'btn block', href: quizHash('errors', z.ue) }, 'Retravailler mes erreurs'),
+        h('a', { class: 'btn block', href: '#/' }, 'Accueil'))
+    ));
+    quiz = null;
+  }
+
   function renderQuizEnd() {
     var z = quiz;
     quiz = null;
     render(h('div', { class: 'center end' },
       h('div', { class: 'big-emoji' }, z.score === z.qs.length ? '🎯' : '📊'),
       h('h1', null, 'Score : ' + z.score + ' / ' + z.qs.length),
-      h('p', { class: 'muted' }, z.score === z.qs.length ? 'Sans faute !' : 'Refais un QCM pour fixer les notions.'),
+      h('p', { class: 'muted' }, z.score === z.qs.length ? 'Sans faute !' : 'Refais un QCM ou travaille tes erreurs pour fixer les notions.'),
       h('div', { class: 'stack' },
-        h('a', { class: 'btn primary big block', href: '#/quiz' + (z.ue ? '?ue=' + z.ue : ''), onclick: function () { setTimeout(route, 0); } }, 'Nouveau QCM'),
+        h('a', { class: 'btn primary big block', href: quizHash(z.mode, z.ue), onclick: function () { setTimeout(route, 0); } }, 'Nouveau QCM'),
+        h('a', { class: 'btn block', href: quizHash('errors', z.ue) }, 'Mes erreurs'),
         h('a', { class: 'btn block', href: '#/' }, 'Accueil'))
     ));
   }
 
-  // ---------- Mes cartes ----------
-
-  function cardsHash(mode, ue) {
-    var q = [];
-    if (mode === 'notes') q.push('mode=notes');
-    if (ue) q.push('ue=' + ue);
-    return '#/cards' + (q.length ? '?' + q.join('&') : '');
-  }
+  // ---------- Bibliothèque : flashcards, fiches de cours, formulaire ----------
 
   function viewCards() {
     var filterUe = params().ue || '';
     if (filterUe && !UES[filterUe]) filterUe = '';
-    var mode = params().mode === 'notes' ? 'notes' : 'cards';
+    var mode = params().mode === 'notes' ? 'notes' : (params().mode === 'formules' ? 'formules' : 'cards');
     var search = '';
 
     var list = h('div', { class: 'card-list' });
-    var searchBox = h('input', { type: 'search', placeholder: mode === 'notes' ? 'Rechercher dans les fiches de cours…' : 'Rechercher une flashcard…', 'aria-label': 'Rechercher' });
+    var placeholders = { notes: 'Rechercher dans les fiches de cours…', formules: 'Rechercher une formule…', cards: 'Rechercher une flashcard…' };
+    var searchBox = h('input', { type: 'search', placeholder: placeholders[mode], 'aria-label': 'Rechercher' });
 
     var shown = PAGE;
+
+    function source() {
+      if (mode === 'notes') return notesFor(filterUe);
+      if (mode === 'formules') return cardsFor(filterUe, 'formule');
+      return cardsFor(filterUe, '');
+    }
 
     function renderList() {
       list.textContent = '';
       var term = search.toLowerCase();
-      var source = mode === 'notes' ? notesFor(filterUe) : cardsFor(filterUe);
-      var items = source.filter(function (c) {
+      var items = source().filter(function (c) {
         return !term || (c.q + ' ' + c.a).toLowerCase().indexOf(term) !== -1;
       });
-      var unit = mode === 'notes' ? 'fiche' : 'flashcard';
+      var unit = mode === 'notes' ? 'fiche' : (mode === 'formules' ? 'formule' : 'flashcard');
       list.appendChild(h('p', { class: 'muted small' }, items.length + ' ' + unit + (items.length > 1 ? 's' : '')));
       if (!items.length) list.appendChild(h('div', { class: 'card-empty' }, 'Aucun résultat.'));
       items.slice(0, shown).forEach(function (c) {
@@ -526,11 +731,21 @@
               datedNote(c))));
           return;
         }
+        if (mode === 'formules') {
+          list.appendChild(h('div', { class: 'row' },
+            h('div', { class: 'row-main' },
+              h('div', { class: 'flash-ue' }, ueLabel(c.ue)),
+              h('div', null, h('strong', null, c.q)),
+              h('div', { class: 'formula' }, c.a),
+              datedNote(c))));
+          return;
+        }
         var custom = isCustom(c);
         var p = state.progress[c.id];
+        var badge = KIND_BADGE[kindOf(c)];
         list.appendChild(h('div', { class: 'row' },
           h('div', { class: 'row-main' },
-            h('div', { class: 'flash-ue' }, ueLabel(c.ue) + (custom ? ' · perso' : '') + (p ? ' · boîte ' + p.box : ' · nouvelle')),
+            h('div', { class: 'flash-ue' }, ueLabel(c.ue) + (badge ? ' · ' + badge : '') + (custom ? ' · perso' : '') + (p ? ' · boîte ' + p.box : ' · nouvelle')),
             h('div', null, h('strong', null, c.q)),
             h('div', { class: 'muted' }, c.a),
             datedNote(c)),
@@ -588,12 +803,13 @@
         fileInput,
         h('button', { class: 'btn block danger', onclick: resetProgress }, 'Réinitialiser la progression')));
 
-    var seg = h('div', { class: 'seg' },
-      h('a', { class: 'seg-btn' + (mode === 'cards' ? ' on' : ''), href: cardsHash('cards', filterUe) }, 'Flashcards (' + cardsFor(filterUe).length + ')'),
-      h('a', { class: 'seg-btn' + (mode === 'notes' ? ' on' : ''), href: cardsHash('notes', filterUe) }, 'Fiches de cours (' + notesFor(filterUe).length + ')'));
+    var tabs = seg([
+      { label: 'Flashcards', on: mode === 'cards', href: cardsHash('cards', filterUe) },
+      { label: 'Cours', on: mode === 'notes', href: cardsHash('notes', filterUe) },
+      { label: 'Formules', on: mode === 'formules', href: cardsHash('formules', filterUe) }]);
 
     render(h('div', null,
-      seg,
+      tabs,
       ueChips(filterUe, function (val) { location.hash = cardsHash(mode, val); }),
       searchBox, mode === 'cards' ? add : null, list, mode === 'cards' ? tools : null));
     renderList();
@@ -630,6 +846,7 @@
   function route() {
     session = null; // une session abandonnée ne doit plus capter le clavier
     quiz = null;
+    stopTimer();
     var name = (location.hash.replace(/^#\/?/, '').split('?')[0]) || 'home';
     var views = { home: viewHome, review: viewReview, quiz: viewQuiz, cards: viewCards };
     (views[name] || viewHome)();
@@ -649,11 +866,15 @@
         else if (e.key === '2') answer('hard');
         else if (e.key === '3') answer('good');
       }
-    } else if (quiz && quiz.picked == null && quiz.i < quiz.qs.length) {
-      var idx = e.key.toLowerCase().charCodeAt(0) - 97;
-      if (e.key.length === 1 && idx >= 0 && idx < quiz.qs[quiz.i].choices.length) pick(idx);
-    } else if (quiz && quiz.picked != null && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault(); next();
+    } else if (quiz && quiz.phase === 'run' && quiz.i < quiz.qs.length) {
+      var idx = e.key.length === 1 ? e.key.toLowerCase().charCodeAt(0) - 97 : -1;
+      var nChoices = quiz.qs[quiz.i].choices.length;
+      if (quiz.mode === 'exam') {
+        if (idx >= 0 && idx < nChoices) pick(idx);
+        else if ((e.key === 'Enter' || e.key === ' ') && quiz.picked != null) { e.preventDefault(); validateExam(); }
+      } else if (quiz.picked == null) {
+        if (idx >= 0 && idx < nChoices) pick(idx);
+      } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
     }
   });
 

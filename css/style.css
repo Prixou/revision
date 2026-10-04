@@ -235,3 +235,17 @@ details.add summary { min-height: 52px; display: flex; align-items: center; font
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--border); border-radius: 12px; padding: 4px; margin-bottom: 12px; }
 .seg-btn { text-align: center; text-decoration: none; padding: 10px 6px; border-radius: 9px; font-weight: 600; font-size: .9rem; color: var(--muted); }
 .seg-btn.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+/* Cartes à trous, formulaire, raccourcis, examen blanc */
+.cloze-blank { display: inline-block; min-width: 3.2em; padding: 0 .5em; border-radius: 8px; background: var(--border); color: var(--muted); text-align: center; }
+.cloze-hit { padding: 0 .35em; border-radius: 8px; background: var(--good-bg); color: var(--good); font-weight: 700; }
+.formula { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .95rem; background: var(--bg); border-radius: 10px; padding: 8px 10px; overflow-wrap: anywhere; }
+.quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 4px; }
+.quick .btn { min-height: 44px; padding: 8px 10px; font-size: .92rem; }
+.seg3 { grid-template-columns: repeat(3, 1fr); }
+.seg2 { grid-template-columns: repeat(2, 1fr); }
+.choice.sel { border-color: var(--primary); background: var(--bg); box-shadow: inset 0 0 0 1px var(--primary); }
+.timer { font-weight: 700; font-variant-numeric: tabular-nums; }
+.intro { text-align: center; padding: 28px 8px; }
+.wrong-line { color: var(--bad); font-size: .92rem; }
+.right-line { color: var(--good); font-size: .92rem; font-weight: 600; }

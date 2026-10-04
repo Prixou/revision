@@ -43,20 +43,48 @@ window.DCG_NOTES = [];
 window.DCG_QCM = [];
 
 /*
- * Ajoute des flashcards pour une UE. Chaque ligne : [question, réponse, noteId?, dateRegle?]
+ * Ajoute des flashcards pour une UE. Chaque ligne : [question, réponse, noteId?, dateRegle?, type?]
+ *   type : 'calc' (calcul), 'ecr' (écriture comptable), 'formule' ; sinon question simple.
+ *   Une question contenant « formule » est automatiquement classée dans le formulaire.
  * Les ids sont générés dans l'ordre (f<ue>-001, f<ue>-002...) : ne JAMAIS réordonner ni supprimer
- * de lignes existantes (la progression y est rattachée) ; ajouter uniquement à la fin d'un fichier.
+ * de lignes existantes (la progression y est rattachée) ; ajouter uniquement à la fin.
+ * Ordre de chargement des scripts = ordre des ids : ne pas le modifier.
  */
 (function () {
   var counters = {};
+  function nextId(prefix, ue) {
+    var key = prefix + ue;
+    counters[key] = (counters[key] || 0) + 1;
+    var n = String(counters[key]);
+    while (n.length < 3) n = '0' + n;
+    return prefix + ue + '-' + n;
+  }
+
   window.DCG_FLASH = function (ue, rows) {
     rows.forEach(function (r) {
-      counters[ue] = (counters[ue] || 0) + 1;
-      var n = String(counters[ue]);
-      while (n.length < 3) n = '0' + n;
-      var card = { id: 'f' + ue + '-' + n, ue: ue, q: r[0], a: r[1] };
+      var card = { id: nextId('f', ue), ue: ue, q: r[0], a: r[1] };
       if (r[2]) card.n = r[2];
       if (r[3]) card.d = r[3];
+      var kind = r[4] || (/formule/i.test(r[0]) ? 'formule' : '');
+      if (kind) card.kind = kind;
+      window.DCG_CARDS.push(card);
+    });
+  };
+
+  /*
+   * Cartes à trous : chaque ligne [texte avec {{réponses}}, noteId?, dateRegle?].
+   * Ex. « La VAN = {{somme des flux actualisés}} − {{capital investi}} »
+   */
+  window.DCG_CLOZE = function (ue, rows) {
+    rows.forEach(function (r) {
+      var t = r[0];
+      var card = {
+        id: nextId('c', ue), ue: ue, cloze: true, kind: 'cloze', t: t,
+        q: t.replace(/\{\{[\s\S]*?\}\}/g, '[…]'),
+        a: t.replace(/\{\{([\s\S]*?)\}\}/g, '$1')
+      };
+      if (r[1]) card.n = r[1];
+      if (r[2]) card.d = r[2];
       window.DCG_CARDS.push(card);
     });
   };
