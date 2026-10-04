@@ -5,6 +5,8 @@
   var INTERVALS = [0, 1, 3, 7, 14, 30, 60]; // jours avant la prochaine revue, par "boîte"
   var MASTERED_BOX = 4;
   var SESSION_SIZE = 20;
+  var NEW_PER_DAY = 20; // nouvelles cartes introduites par jour (évite d'afficher des centaines de cartes « à réviser »)
+  var PAGE = 60; // cartes affichées par page dans « Mes cartes »
   var QUIZ_SIZE = 10;
   var SWIPE_MIN = 70; // px
 
@@ -86,6 +88,11 @@
 
   function ueLabel(ue) { return UES[ue] ? 'UE ' + ue + ' · ' + UES[ue] : 'UE ' + ue; }
 
+  // Pastille « règle datée » : précise l'année/le texte à laquelle le chiffre s'applique
+  function datedNote(item) {
+    return item.d ? h('div', { class: 'dated' }, '📅 ' + item.d) : null;
+  }
+
   // Rangée de pastilles défilante pour filtrer par UE (adaptée au pouce)
   function ueChips(selected, onPick) {
     var box = h('div', { class: 'chips' });
@@ -119,9 +126,28 @@
     return allCards().filter(function (c) { return !ue || String(c.ue) === String(ue); });
   }
 
-  function isDue(card) {
+  function isReviewDue(card) {
     var p = state.progress[card.id];
-    return !p || p.due <= today();
+    return !!p && p.due <= today();
+  }
+
+  function isNewCard(card) { return !state.progress[card.id]; }
+
+  function newIntroducedToday() {
+    var t = today();
+    return Object.keys(state.progress).filter(function (id) { return state.progress[id].first === t; }).length;
+  }
+
+  // File du jour : révisions échues + nouvelles cartes dans la limite quotidienne
+  function queueFor(ue) {
+    var list = cardsFor(ue);
+    var allowed = Math.max(0, NEW_PER_DAY - newIntroducedToday());
+    var fresh = list.filter(isNewCard);
+    return {
+      reviews: list.filter(isReviewDue),
+      fresh: shuffle(fresh).slice(0, allowed),
+      freshTotal: fresh.length
+    };
   }
 
   function logReview() {
@@ -139,7 +165,7 @@
 
   // Répétition espacée (boîtes de Leitner) : grade = 'again' | 'hard' | 'good'
   function grade(card, g) {
-    var p = state.progress[card.id] || { box: 0, due: today(), seen: 0, ok: 0 };
+    var p = state.progress[card.id] || { box: 0, due: today(), seen: 0, ok: 0, first: today() };
     p.seen++;
     if (g === 'again') p.box = 0;
     else if (g === 'good') { p.box = Math.min(p.box + 1, INTERVALS.length - 1); p.ok++; }
@@ -154,19 +180,24 @@
 
   function viewHome() {
     var cards = allCards();
-    var due = cards.filter(isDue);
+    var q = queueFor('');
+    var dueCount = q.reviews.length + q.fresh.length;
     var seenToday = state.log[today()] || 0;
 
     var tiles = h('div', { class: 'tiles' },
-      tile(due.length, 'à réviser'),
+      tile(dueCount, 'à réviser'),
       tile(seenToday, 'faites aujourd\'hui'),
       tile(streak(), streak() > 1 ? 'jours d\'affilée' : 'jour d\'affilée'),
       tile(cards.length, 'cartes au total')
     );
 
-    var cta = due.length
-      ? h('a', { class: 'btn primary big block', href: '#/review' }, 'Réviser maintenant · ' + Math.min(due.length, SESSION_SIZE) + ' cartes')
-      : h('p', { class: 'muted' }, 'Rien à réviser pour le moment 🎉 Fais un QCM ou ajoute des cartes.');
+    var detail = dueCount
+      ? h('p', { class: 'muted small center' }, q.reviews.length + ' révision' + (q.reviews.length > 1 ? 's' : '') + ' + ' + q.fresh.length + ' nouvelle' + (q.fresh.length > 1 ? 's' : '') + ' (' + NEW_PER_DAY + ' nouvelles max. par jour)')
+      : null;
+
+    var cta = dueCount
+      ? h('a', { class: 'btn primary big block', href: '#/review' }, 'Réviser maintenant · ' + Math.min(dueCount, SESSION_SIZE) + ' cartes')
+      : h('p', { class: 'muted' }, q.freshTotal ? 'Objectif du jour atteint 🎉 Fais un QCM ou reviens demain pour de nouvelles cartes.' : 'Rien à réviser pour le moment 🎉 Fais un QCM ou ajoute des cartes.');
 
     var rows = Object.keys(UES).map(function (k) {
       var list = cardsFor(k);
@@ -175,13 +206,14 @@
         return p && p.box >= MASTERED_BOX;
       }).length;
       var pct = list.length ? Math.round(100 * mastered / list.length) : 0;
-      var dueN = list.filter(isDue).length;
+      var dueN = list.filter(isReviewDue).length;
+      var newN = list.filter(isNewCard).length;
       return h('div', { class: 'ue-row' },
         h('div', { class: 'ue-head' },
           h('div', { class: 'ue-name' }, h('strong', null, 'UE ' + k), ' ', UES[k]),
           h('div', { class: 'ue-pct' }, pct + ' %')),
         h('div', { class: 'bar', role: 'img', 'aria-label': pct + ' % maîtrisé' }, h('span', { style: 'width:' + pct + '%' })),
-        h('div', { class: 'ue-meta' }, list.length ? (mastered + '/' + list.length + ' maîtrisées · ' + dueN + ' à revoir') : 'Aucune carte'),
+        h('div', { class: 'ue-meta' }, list.length ? (mastered + '/' + list.length + ' maîtrisées · ' + dueN + ' à revoir · ' + newN + ' nouvelles') : 'Aucune carte'),
         h('div', { class: 'ue-actions' },
           list.length ? h('a', { class: 'btn', href: '#/review?ue=' + k }, 'Fiches') : null,
           qcmFor(k).length ? h('a', { class: 'btn', href: '#/quiz?ue=' + k }, 'QCM') : null
@@ -189,10 +221,19 @@
       );
     });
 
+    var meta = window.DCG_META || {};
+    var info = meta.verifiedOn
+      ? h('div', { class: 'info' },
+          h('strong', null, '📅 Contenu vérifié le ' + meta.verifiedOn),
+          h('div', null, meta.programme),
+          h('div', null, 'Les points chiffrés qui changent avec les années portent une pastille 📅 avec la date de la règle.'))
+      : null;
+
     render(h('div', null,
-      tiles, cta,
+      tiles, cta, detail,
       h('h2', null, 'Progression par UE'),
-      h('div', { class: 'ue-list' }, rows)
+      h('div', { class: 'ue-list' }, rows),
+      info
     ));
   }
 
@@ -222,14 +263,17 @@
   function viewReview() {
     var ue = params().ue || '';
     if (ue && !UES[ue]) ue = '';
-    var due = shuffle(cardsFor(ue).filter(isDue));
+    var q = queueFor(ue);
+    var due = shuffle(q.reviews).concat(q.fresh); // les révisions d'abord, puis les nouvelles
     var chips = ueChips(ue, goUe('#/review'));
 
     if (!due.length) {
       session = null;
       render(h('div', null,
         chips,
-        h('div', { class: 'card-empty' }, 'Aucune carte à réviser ici pour le moment. Reviens demain, ou choisis une autre UE.'),
+        h('div', { class: 'card-empty' }, q.freshTotal
+          ? 'Objectif du jour atteint (' + NEW_PER_DAY + ' nouvelles cartes). Reviens demain, ou fais un QCM.'
+          : 'Aucune carte à réviser ici pour le moment. Reviens demain, ou choisis une autre UE.'),
         h('p', null, h('a', { class: 'btn', href: '#/' }, 'Retour à l\'accueil'))
       ));
       return;
@@ -249,7 +293,7 @@
         'aria-label': s.shown ? 'Réponse affichée' : 'Toucher pour voir la réponse', onclick: function () { if (!session.shown) reveal(); } },
       h('div', { class: 'flash-ue' }, ueLabel(card.ue)),
       h('div', { class: 'flash-q' }, card.q),
-      s.shown ? h('div', { class: 'flash-a' }, card.a) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse')
+      s.shown ? h('div', { class: 'flash-a' }, card.a, datedNote(card)) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse')
     );
     attachSwipe(face);
 
@@ -382,7 +426,7 @@
     var feedback = null, dock = null;
     if (z.picked != null) {
       var ok = z.picked === q.answer;
-      feedback = h('div', { class: 'feedback ' + (ok ? 'ok' : 'ko') }, h('strong', null, ok ? 'Bonne réponse ! ' : 'Raté. '), q.expl);
+      feedback = h('div', { class: 'feedback ' + (ok ? 'ok' : 'ko') }, h('strong', null, ok ? 'Bonne réponse ! ' : 'Raté. '), q.expl, datedNote(q));
       dock = h('div', { class: 'dock' },
         h('button', { class: 'btn primary big block', onclick: next }, z.i + 1 < z.qs.length ? 'Question suivante' : 'Voir le score'));
     }
@@ -437,6 +481,8 @@
     var list = h('div', { class: 'card-list' });
     var searchBox = h('input', { type: 'search', placeholder: 'Rechercher une carte…', 'aria-label': 'Rechercher une carte' });
 
+    var shown = PAGE;
+
     function renderList() {
       list.textContent = '';
       var term = search.toLowerCase();
@@ -445,19 +491,24 @@
       });
       list.appendChild(h('p', { class: 'muted small' }, items.length + ' carte' + (items.length > 1 ? 's' : '')));
       if (!items.length) list.appendChild(h('div', { class: 'card-empty' }, 'Aucune carte.'));
-      items.forEach(function (c) {
+      items.slice(0, shown).forEach(function (c) {
         var custom = isCustom(c);
         var p = state.progress[c.id];
         list.appendChild(h('div', { class: 'row' },
           h('div', { class: 'row-main' },
             h('div', { class: 'flash-ue' }, ueLabel(c.ue) + (custom ? ' · perso' : '') + (p ? ' · boîte ' + p.box : ' · nouvelle')),
             h('div', null, h('strong', null, c.q)),
-            h('div', { class: 'muted' }, c.a)),
+            h('div', { class: 'muted' }, c.a),
+            datedNote(c)),
           custom ? h('button', { class: 'btn small danger', onclick: function () { removeCard(c.id); } }, 'Supprimer') : null));
       });
+      if (items.length > shown) {
+        list.appendChild(h('button', { class: 'btn block', onclick: function () { shown += PAGE; renderList(); } },
+          'Afficher plus (' + (items.length - shown) + ' restantes)'));
+      }
     }
 
-    searchBox.addEventListener('input', function () { search = searchBox.value; renderList(); });
+    searchBox.addEventListener('input', function () { search = searchBox.value; shown = PAGE; renderList(); });
 
     // Formulaire d'ajout (replié par défaut pour garder la liste accessible)
     var fUe = ueSelect('new-ue', filterUe || 10);

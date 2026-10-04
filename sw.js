@@ -1,6 +1,6 @@
 // Réseau d'abord (le contenu est toujours à jour), cache en secours hors ligne.
-const CACHE = 'dcg-revision-v2';
-const FILES = ['./', 'index.html', 'css/style.css', 'js/data.js', 'js/app.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'dcg-revision-v3';
+const FILES = ['./', 'index.html', 'css/style.css', 'js/data.js', 'js/ue2.js', 'js/ue4.js', 'js/ue6.js', 'js/ue7.js', 'js/ue10.js', 'js/ue11.js', 'js/app.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
