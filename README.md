@@ -10,7 +10,7 @@ le **programme réformé** (arrêté du 4 août 2025 : enseigné depuis la rentr
 | 6  | Finance d'entreprise | 86 | 35 |
 | 7  | Management des organisations | 100 | 30 |
 | 10 | Comptabilité approfondie | 88 | 30 |
-| 11 | Contrôle de gestion | 70 | 36 |
+| 11 | Contrôle de gestion | 90 | 44 |
 
 Aucune installation ni compte : HTML/JS statique. La progression est enregistrée dans le navigateur
 (`localStorage`) et l'app fonctionne hors ligne une fois ouverte.
