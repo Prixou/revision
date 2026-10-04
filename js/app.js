@@ -122,6 +122,15 @@
     return window.DCG_CARDS.concat(state.custom).filter(function (c) { return UES[c.ue]; });
   }
 
+  // Fiches de cours détaillées (lecture), reliées aux flashcards par le champ n
+  var noteIndex = null;
+  function allNotes() { return (window.DCG_NOTES || []).filter(function (n) { return UES[n.ue]; }); }
+  function notesFor(ue) { return allNotes().filter(function (n) { return !ue || String(n.ue) === String(ue); }); }
+  function noteOf(id) {
+    if (!noteIndex) { noteIndex = {}; allNotes().forEach(function (n) { noteIndex[n.id] = n; }); }
+    return noteIndex[id] || null;
+  }
+
   function cardsFor(ue) {
     return allCards().filter(function (c) { return !ue || String(c.ue) === String(ue); });
   }
@@ -196,7 +205,7 @@
       : null;
 
     var cta = dueCount
-      ? h('a', { class: 'btn primary big block', href: '#/review' }, 'Réviser maintenant · ' + Math.min(dueCount, SESSION_SIZE) + ' cartes')
+      ? h('a', { class: 'btn primary big block', href: '#/review' }, 'Réviser mes flashcards · ' + Math.min(dueCount, SESSION_SIZE))
       : h('p', { class: 'muted' }, q.freshTotal ? 'Objectif du jour atteint 🎉 Fais un QCM ou reviens demain pour de nouvelles cartes.' : 'Rien à réviser pour le moment 🎉 Fais un QCM ou ajoute des cartes.');
 
     var rows = Object.keys(UES).map(function (k) {
@@ -215,7 +224,7 @@
         h('div', { class: 'bar', role: 'img', 'aria-label': pct + ' % maîtrisé' }, h('span', { style: 'width:' + pct + '%' })),
         h('div', { class: 'ue-meta' }, list.length ? (mastered + '/' + list.length + ' maîtrisées · ' + dueN + ' à revoir · ' + newN + ' nouvelles') : 'Aucune carte'),
         h('div', { class: 'ue-actions' },
-          list.length ? h('a', { class: 'btn', href: '#/review?ue=' + k }, 'Fiches') : null,
+          list.length ? h('a', { class: 'btn', href: '#/review?ue=' + k }, 'Flashcards') : null,
           qcmFor(k).length ? h('a', { class: 'btn', href: '#/quiz?ue=' + k }, 'QCM') : null
         )
       );
@@ -287,13 +296,18 @@
     var s = session;
     if (!s.queue.length) { renderSessionEnd(); return; }
     var card = s.queue[0];
+    var note = card.n ? noteOf(card.n) : null;
     var pct = Math.round(100 * s.done / s.total);
 
     var face = h('div', { class: 'flash' + (s.shown ? ' open' : ''), role: 'button', tabindex: '0',
         'aria-label': s.shown ? 'Réponse affichée' : 'Toucher pour voir la réponse', onclick: function () { if (!session.shown) reveal(); } },
       h('div', { class: 'flash-ue' }, ueLabel(card.ue)),
       h('div', { class: 'flash-q' }, card.q),
-      s.shown ? h('div', { class: 'flash-a' }, card.a, datedNote(card)) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse')
+      s.shown ? h('div', { class: 'flash-a' }, card.a, datedNote(card)) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse'),
+      s.shown && note ? h('div', { class: 'note-box' },
+        h('button', { class: 'btn small', type: 'button', onclick: function (e) { e.stopPropagation(); s.showNote = !s.showNote; renderCard(); } },
+          s.showNote ? 'Masquer la fiche de cours' : '📖 Fiche de cours'),
+        s.showNote ? h('div', { class: 'note-text' }, h('strong', null, note.q), h('div', null, note.a), datedNote(note)) : null) : null
     );
     attachSwipe(face);
 
@@ -359,6 +373,7 @@
       if (g === 'good') s.good++;
     }
     s.shown = false;
+    s.showNote = false;
     renderCard();
   }
 
@@ -473,25 +488,44 @@
 
   // ---------- Mes cartes ----------
 
+  function cardsHash(mode, ue) {
+    var q = [];
+    if (mode === 'notes') q.push('mode=notes');
+    if (ue) q.push('ue=' + ue);
+    return '#/cards' + (q.length ? '?' + q.join('&') : '');
+  }
+
   function viewCards() {
     var filterUe = params().ue || '';
     if (filterUe && !UES[filterUe]) filterUe = '';
+    var mode = params().mode === 'notes' ? 'notes' : 'cards';
     var search = '';
 
     var list = h('div', { class: 'card-list' });
-    var searchBox = h('input', { type: 'search', placeholder: 'Rechercher une carte…', 'aria-label': 'Rechercher une carte' });
+    var searchBox = h('input', { type: 'search', placeholder: mode === 'notes' ? 'Rechercher dans les fiches de cours…' : 'Rechercher une flashcard…', 'aria-label': 'Rechercher' });
 
     var shown = PAGE;
 
     function renderList() {
       list.textContent = '';
       var term = search.toLowerCase();
-      var items = cardsFor(filterUe).filter(function (c) {
+      var source = mode === 'notes' ? notesFor(filterUe) : cardsFor(filterUe);
+      var items = source.filter(function (c) {
         return !term || (c.q + ' ' + c.a).toLowerCase().indexOf(term) !== -1;
       });
-      list.appendChild(h('p', { class: 'muted small' }, items.length + ' carte' + (items.length > 1 ? 's' : '')));
-      if (!items.length) list.appendChild(h('div', { class: 'card-empty' }, 'Aucune carte.'));
+      var unit = mode === 'notes' ? 'fiche' : 'flashcard';
+      list.appendChild(h('p', { class: 'muted small' }, items.length + ' ' + unit + (items.length > 1 ? 's' : '')));
+      if (!items.length) list.appendChild(h('div', { class: 'card-empty' }, 'Aucun résultat.'));
       items.slice(0, shown).forEach(function (c) {
+        if (mode === 'notes') {
+          list.appendChild(h('div', { class: 'row' },
+            h('div', { class: 'row-main' },
+              h('div', { class: 'flash-ue' }, ueLabel(c.ue)),
+              h('div', null, h('strong', null, c.q)),
+              h('div', { class: 'note-body' }, c.a),
+              datedNote(c))));
+          return;
+        }
         var custom = isCustom(c);
         var p = state.progress[c.id];
         list.appendChild(h('div', { class: 'row' },
@@ -554,9 +588,14 @@
         fileInput,
         h('button', { class: 'btn block danger', onclick: resetProgress }, 'Réinitialiser la progression')));
 
+    var seg = h('div', { class: 'seg' },
+      h('a', { class: 'seg-btn' + (mode === 'cards' ? ' on' : ''), href: cardsHash('cards', filterUe) }, 'Flashcards (' + cardsFor(filterUe).length + ')'),
+      h('a', { class: 'seg-btn' + (mode === 'notes' ? ' on' : ''), href: cardsHash('notes', filterUe) }, 'Fiches de cours (' + notesFor(filterUe).length + ')'));
+
     render(h('div', null,
-      ueChips(filterUe, goUe('#/cards')),
-      searchBox, add, list, tools));
+      seg,
+      ueChips(filterUe, function (val) { location.hash = cardsHash(mode, val); }),
+      searchBox, mode === 'cards' ? add : null, list, mode === 'cards' ? tools : null));
     renderList();
   }
 

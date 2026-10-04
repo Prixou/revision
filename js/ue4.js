@@ -1,6 +1,6 @@
 /* UE 4 — Droit fiscal (programme réformé, session 2027) */
 (function () {
-  var C = window.DCG_CARDS, Q = window.DCG_QCM;
+  var C = window.DCG_NOTES, Q = window.DCG_QCM;
 
   C.push(
     // ========== Partie 1 — Environnement fiscal du contribuable ==========

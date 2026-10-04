@@ -1,6 +1,6 @@
 /* UE 11 — Contrôle de gestion (programme réformé, session 2027) */
 (function () {
-  var C = window.DCG_CARDS, Q = window.DCG_QCM;
+  var C = window.DCG_NOTES, Q = window.DCG_QCM;
 
   C.push(
     // ========== 1. Positionnement du contrôle de gestion ==========
@@ -126,7 +126,7 @@
 
 /* UE 11 — compléments : coûts, prix de vente, charges mixtes, écarts, pilotage */
 (function () {
-  var C = window.DCG_CARDS, Q = window.DCG_QCM;
+  var C = window.DCG_NOTES, Q = window.DCG_QCM;
 
   C.push(
     { id: 'ue11-141', ue: 11, q: "Comment classe-t-on les charges selon leur comportement ?", a: "Variables (proportionnelles à l'activité), fixes (indépendantes de l'activité à court terme, charges de structure), semi-variables ou mixtes (une part fixe et une part variable), fixes par paliers (étagées) quand la capacité augmente par à-coups." },

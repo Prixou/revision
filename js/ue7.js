@@ -1,6 +1,6 @@
 /* UE 7 — Management des organisations (programme réformé, session 2027) */
 (function () {
-  var C = window.DCG_CARDS, Q = window.DCG_QCM;
+  var C = window.DCG_NOTES, Q = window.DCG_QCM;
 
   C.push(
     // ========== 1. Fondamentaux du management des organisations ==========

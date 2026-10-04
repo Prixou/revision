@@ -1,6 +1,6 @@
 /* UE 10 — Comptabilité approfondie (programme réformé, session 2027 ; PCG modifié par le règlement ANC 2022-06) */
 (function () {
-  var C = window.DCG_CARDS, Q = window.DCG_QCM;
+  var C = window.DCG_NOTES, Q = window.DCG_QCM;
   var PCG25 = "PCG 2025 (règlement ANC 2022-06), exercices ouverts à compter du 01/01/2025";
 
   C.push(
