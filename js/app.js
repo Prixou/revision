@@ -6,8 +6,10 @@
   var MASTERED_BOX = 4;
   var SESSION_SIZE = 20;
   var QUIZ_SIZE = 10;
+  var SWIPE_MIN = 70; // px
 
   var UES = window.DCG_UES;
+  var SHORT = window.DCG_UE_SHORT || {};
   var app = document.getElementById('app');
 
   // ---------- Stockage ----------
@@ -19,10 +21,7 @@
   function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var s = JSON.parse(raw);
-        return Object.assign(emptyState(), s);
-      }
+      if (raw) return Object.assign(emptyState(), JSON.parse(raw));
     } catch (e) { /* stockage indisponible : on travaille en mémoire */ }
     return emptyState();
   }
@@ -49,6 +48,10 @@
     return a;
   }
 
+  function vibrate(ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* ignore */ }
+  }
+
   // Création d'éléments DOM (textContent => pas d'injection HTML avec le contenu utilisateur)
   function h(tag, attrs) {
     var el = document.createElement(tag);
@@ -72,17 +75,33 @@
     else el.appendChild(child.nodeType ? child : document.createTextNode(String(child)));
   }
 
-  function render(node) {
+  function render(node, keepScroll) {
     app.textContent = '';
     app.appendChild(node);
-    window.scrollTo(0, 0);
+    if (!keepScroll) window.scrollTo(0, 0);
+    // Centre la pastille active dans la rangée défilante
+    var on = app.querySelector('.chip.on');
+    if (on && on.parentNode) on.parentNode.scrollLeft = on.offsetLeft - (on.parentNode.clientWidth - on.offsetWidth) / 2;
   }
 
-  function ueLabel(ue) { return 'UE ' + ue + ' · ' + UES[ue]; }
+  function ueLabel(ue) { return UES[ue] ? 'UE ' + ue + ' · ' + UES[ue] : 'UE ' + ue; }
 
-  function ueSelect(id, withAll, selected) {
+  // Rangée de pastilles défilante pour filtrer par UE (adaptée au pouce)
+  function ueChips(selected, onPick) {
+    var box = h('div', { class: 'chips' });
+    function chip(val, label) {
+      var on = String(selected) === String(val);
+      return h('button', { class: 'chip' + (on ? ' on' : ''), type: 'button', 'aria-pressed': on ? 'true' : 'false', onclick: function () { if (!on) onPick(val); } }, label);
+    }
+    box.appendChild(chip('', 'Toutes'));
+    Object.keys(UES).forEach(function (k) {
+      box.appendChild(chip(k, 'UE ' + k + ' · ' + (SHORT[k] || UES[k])));
+    });
+    return box;
+  }
+
+  function ueSelect(id, selected) {
     var sel = h('select', { id: id });
-    if (withAll) sel.appendChild(h('option', { value: '' }, 'Toutes les UE'));
     Object.keys(UES).forEach(function (k) {
       sel.appendChild(h('option', { value: k, selected: String(selected) === k }, ueLabel(k)));
     });
@@ -91,7 +110,10 @@
 
   // ---------- Données ----------
 
-  function allCards() { return window.DCG_CARDS.concat(state.custom); }
+  // Seules les UE suivies sont proposées (on ignore d'éventuelles cartes d'autres UE)
+  function allCards() {
+    return window.DCG_CARDS.concat(state.custom).filter(function (c) { return UES[c.ue]; });
+  }
 
   function cardsFor(ue) {
     return allCards().filter(function (c) { return !ue || String(c.ue) === String(ue); });
@@ -136,15 +158,15 @@
     var seenToday = state.log[today()] || 0;
 
     var tiles = h('div', { class: 'tiles' },
-      tile(due.length, 'à réviser aujourd\'hui'),
-      tile(seenToday, 'révisées aujourd\'hui'),
+      tile(due.length, 'à réviser'),
+      tile(seenToday, 'faites aujourd\'hui'),
       tile(streak(), streak() > 1 ? 'jours d\'affilée' : 'jour d\'affilée'),
       tile(cards.length, 'cartes au total')
     );
 
     var cta = due.length
-      ? h('a', { class: 'btn primary big', href: '#/review' }, 'Commencer la révision (' + Math.min(due.length, SESSION_SIZE) + ' cartes)')
-      : h('p', { class: 'muted' }, 'Rien à réviser pour le moment 🎉 Tu peux faire un QCM ou ajouter des cartes.');
+      ? h('a', { class: 'btn primary big block', href: '#/review' }, 'Réviser maintenant · ' + Math.min(due.length, SESSION_SIZE) + ' cartes')
+      : h('p', { class: 'muted' }, 'Rien à réviser pour le moment 🎉 Fais un QCM ou ajoute des cartes.');
 
     var rows = Object.keys(UES).map(function (k) {
       var list = cardsFor(k);
@@ -155,18 +177,19 @@
       var pct = list.length ? Math.round(100 * mastered / list.length) : 0;
       var dueN = list.filter(isDue).length;
       return h('div', { class: 'ue-row' },
-        h('div', { class: 'ue-name' }, h('strong', null, 'UE ' + k), ' ', UES[k]),
+        h('div', { class: 'ue-head' },
+          h('div', { class: 'ue-name' }, h('strong', null, 'UE ' + k), ' ', UES[k]),
+          h('div', { class: 'ue-pct' }, pct + ' %')),
         h('div', { class: 'bar', role: 'img', 'aria-label': pct + ' % maîtrisé' }, h('span', { style: 'width:' + pct + '%' })),
         h('div', { class: 'ue-meta' }, list.length ? (mastered + '/' + list.length + ' maîtrisées · ' + dueN + ' à revoir') : 'Aucune carte'),
         h('div', { class: 'ue-actions' },
-          list.length ? h('a', { class: 'btn small', href: '#/review?ue=' + k }, 'Fiches') : null,
-          qcmFor(k).length ? h('a', { class: 'btn small', href: '#/quiz?ue=' + k }, 'QCM') : null
+          list.length ? h('a', { class: 'btn', href: '#/review?ue=' + k }, 'Fiches') : null,
+          qcmFor(k).length ? h('a', { class: 'btn', href: '#/quiz?ue=' + k }, 'QCM') : null
         )
       );
     });
 
     render(h('div', null,
-      h('h1', null, 'Bonjour 👋'),
       tiles, cta,
       h('h2', null, 'Progression par UE'),
       h('div', { class: 'ue-list' }, rows)
@@ -192,27 +215,27 @@
     return out;
   }
 
+  function goUe(base) {
+    return function (val) { location.hash = base + (val ? '?ue=' + val : ''); };
+  }
+
   function viewReview() {
     var ue = params().ue || '';
+    if (ue && !UES[ue]) ue = '';
     var due = shuffle(cardsFor(ue).filter(isDue));
-
-    var picker = ueSelect('ue-pick', true, ue);
-    picker.addEventListener('change', function () {
-      location.hash = '#/review' + (picker.value ? '?ue=' + picker.value : '');
-    });
+    var chips = ueChips(ue, goUe('#/review'));
 
     if (!due.length) {
       session = null;
       render(h('div', null,
-        h('h1', null, 'Fiches'),
-        h('div', { class: 'toolbar' }, picker),
+        chips,
         h('div', { class: 'card-empty' }, 'Aucune carte à réviser ici pour le moment. Reviens demain, ou choisis une autre UE.'),
         h('p', null, h('a', { class: 'btn', href: '#/' }, 'Retour à l\'accueil'))
       ));
       return;
     }
 
-    session = { queue: due.slice(0, SESSION_SIZE), shown: false, done: 0, total: Math.min(due.length, SESSION_SIZE), good: 0, ue: ue, picker: picker };
+    session = { queue: due.slice(0, SESSION_SIZE), shown: false, done: 0, total: Math.min(due.length, SESSION_SIZE), good: 0, ue: ue, chips: chips };
     renderCard();
   }
 
@@ -222,34 +245,68 @@
     var card = s.queue[0];
     var pct = Math.round(100 * s.done / s.total);
 
-    var face = h('div', { class: 'flash' },
+    var face = h('div', { class: 'flash' + (s.shown ? ' open' : ''), role: 'button', tabindex: '0',
+        'aria-label': s.shown ? 'Réponse affichée' : 'Toucher pour voir la réponse', onclick: function () { if (!session.shown) reveal(); } },
       h('div', { class: 'flash-ue' }, ueLabel(card.ue)),
       h('div', { class: 'flash-q' }, card.q),
-      s.shown ? h('div', { class: 'flash-a' }, card.a) : null
+      s.shown ? h('div', { class: 'flash-a' }, card.a) : h('div', { class: 'flash-hint' }, 'Touche la carte pour voir la réponse')
     );
+    attachSwipe(face);
 
-    var controls = s.shown
-      ? h('div', { class: 'grades' },
-          h('button', { class: 'btn again', onclick: function () { answer('again'); } }, 'À revoir ', h('kbd', null, '1')),
-          h('button', { class: 'btn hard', onclick: function () { answer('hard'); } }, 'Hésitant ', h('kbd', null, '2')),
-          h('button', { class: 'btn good', onclick: function () { answer('good'); } }, 'Je savais ', h('kbd', null, '3')))
-      : h('button', { class: 'btn primary big', id: 'reveal', onclick: reveal }, 'Afficher la réponse ', h('kbd', null, 'Espace'));
+    var dock = s.shown
+      ? h('div', { class: 'dock grades' },
+          h('button', { class: 'btn again', onclick: function () { answer('again'); } }, 'À revoir', h('kbd', null, '1')),
+          h('button', { class: 'btn hard', onclick: function () { answer('hard'); } }, 'Hésitant', h('kbd', null, '2')),
+          h('button', { class: 'btn good', onclick: function () { answer('good'); } }, 'Je savais', h('kbd', null, '3')))
+      : h('div', { class: 'dock' },
+          h('button', { class: 'btn primary big block', onclick: reveal }, 'Afficher la réponse', h('kbd', null, 'Espace')));
 
     render(h('div', null,
-      h('h1', null, 'Fiches'),
-      h('div', { class: 'toolbar' }, s.picker),
-      h('div', { class: 'bar' }, h('span', { style: 'width:' + pct + '%' })),
-      h('p', { class: 'muted' }, s.done + ' / ' + s.total + ' · ' + s.queue.length + ' restante(s)'),
-      face, controls
-    ));
+      s.chips,
+      h('div', { class: 'progress-line' },
+        h('div', { class: 'bar' }, h('span', { style: 'width:' + pct + '%' })),
+        h('span', { class: 'muted' }, s.done + '/' + s.total)),
+      face,
+      s.shown ? h('p', { class: 'muted center small' }, 'Glisse à droite : je savais · à gauche : à revoir') : null,
+      dock
+    ), true);
+  }
+
+  // Balayage sur la carte (réponse visible) : droite = su, gauche = à revoir
+  function attachSwipe(el) {
+    var x0 = 0, y0 = 0, tracking = false;
+    el.addEventListener('touchstart', function (e) {
+      if (!session || !session.shown || e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; tracking = true;
+    }, { passive: true });
+    el.addEventListener('touchmove', function (e) {
+      if (!tracking) return;
+      var dx = e.touches[0].clientX - x0;
+      el.style.transform = 'translateX(' + Math.max(-120, Math.min(120, dx)) + 'px) rotate(' + dx / 30 + 'deg)';
+      el.classList.toggle('swipe-good', dx > SWIPE_MIN);
+      el.classList.toggle('swipe-bad', dx < -SWIPE_MIN);
+    }, { passive: true });
+    el.addEventListener('touchend', function (e) {
+      if (!tracking) return;
+      tracking = false;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - x0, dy = t.clientY - y0;
+      if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5) answer(dx > 0 ? 'good' : 'again');
+      else { el.style.transform = ''; el.classList.remove('swipe-good', 'swipe-bad'); }
+    });
+    el.addEventListener('touchcancel', function () {
+      tracking = false; el.style.transform = ''; el.classList.remove('swipe-good', 'swipe-bad');
+    });
   }
 
   function reveal() { session.shown = true; renderCard(); }
 
   function answer(g) {
     var s = session;
+    if (!s || !s.shown || !s.queue.length) return;
     var card = s.queue.shift();
     grade(card, g);
+    vibrate(g === 'good' ? 10 : 25);
     if (g === 'again') {
       var at = Math.min(3, s.queue.length); // la carte ratée revient dans quelques cartes
       s.queue.splice(at, 0, card);
@@ -264,12 +321,13 @@
   function renderSessionEnd() {
     var s = session;
     session = null;
-    render(h('div', { class: 'center' },
-      h('h1', null, 'Session terminée ✅'),
+    render(h('div', { class: 'center end' },
+      h('div', { class: 'big-emoji' }, '✅'),
+      h('h1', null, 'Session terminée'),
       h('p', null, s.good + ' cartes sues du premier coup sur ' + s.total + '.'),
-      h('p', null,
-        h('a', { class: 'btn primary', href: '#/review' + (s.ue ? '?ue=' + s.ue : ''), onclick: function () { setTimeout(route, 0); } }, 'Continuer'), ' ',
-        h('a', { class: 'btn', href: '#/' }, 'Accueil'))
+      h('div', { class: 'stack' },
+        h('a', { class: 'btn primary big block', href: '#/review' + (s.ue ? '?ue=' + s.ue : ''), onclick: function () { setTimeout(route, 0); } }, 'Continuer'),
+        h('a', { class: 'btn block', href: '#/' }, 'Accueil'))
     ));
   }
 
@@ -278,29 +336,30 @@
   var quiz = null;
 
   function qcmFor(ue) {
-    return window.DCG_QCM.filter(function (q) { return !ue || String(q.ue) === String(ue); });
+    return window.DCG_QCM.filter(function (q) { return UES[q.ue] && (!ue || String(q.ue) === String(ue)); });
   }
 
   function viewQuiz() {
     var ue = params().ue || '';
+    if (ue && !UES[ue]) ue = '';
     var pool = qcmFor(ue);
-
-    var picker = ueSelect('quiz-ue', true, ue);
-    picker.addEventListener('change', function () {
-      location.hash = '#/quiz' + (picker.value ? '?ue=' + picker.value : '');
-    });
+    var chips = ueChips(ue, goUe('#/quiz'));
 
     if (!pool.length) {
       quiz = null;
-      render(h('div', null,
-        h('h1', null, 'QCM'),
-        h('div', { class: 'toolbar' }, picker),
-        h('div', { class: 'card-empty' }, 'Pas encore de QCM pour cette UE.')
-      ));
+      render(h('div', null, chips, h('div', { class: 'card-empty' }, 'Pas encore de QCM pour cette UE.')));
       return;
     }
 
-    quiz = { qs: shuffle(pool).slice(0, QUIZ_SIZE), i: 0, score: 0, picked: null, picker: picker, ue: ue };
+    // On mélange aussi l'ordre des choix : sinon la bonne réponse se devine à sa position
+    var qs = shuffle(pool).slice(0, QUIZ_SIZE).map(function (q) {
+      var order = shuffle(q.choices.map(function (_, i) { return i; }));
+      return Object.assign({}, q, {
+        choices: order.map(function (i) { return q.choices[i]; }),
+        answer: order.indexOf(q.answer)
+      });
+    });
+    quiz = { qs: qs, i: 0, score: 0, picked: null, chips: chips, ue: ue };
     renderQuestion();
   }
 
@@ -308,6 +367,7 @@
     var z = quiz;
     if (z.i >= z.qs.length) { renderQuizEnd(); return; }
     var q = z.qs[z.i];
+    var pct = Math.round(100 * z.i / z.qs.length);
 
     var opts = q.choices.map(function (c, idx) {
       var cls = 'choice';
@@ -316,49 +376,54 @@
         else if (idx === z.picked) cls += ' wrong';
       }
       return h('button', { class: cls, disabled: z.picked != null, onclick: function () { pick(idx); } },
-        h('span', { class: 'letter' }, String.fromCharCode(65 + idx)), c);
+        h('span', { class: 'letter' }, String.fromCharCode(65 + idx)), h('span', null, c));
     });
 
-    var feedback = null;
+    var feedback = null, dock = null;
     if (z.picked != null) {
       var ok = z.picked === q.answer;
-      feedback = h('div', { class: 'feedback ' + (ok ? 'ok' : 'ko') },
-        h('strong', null, ok ? 'Bonne réponse ! ' : 'Raté. '), q.expl,
-        h('div', null, h('button', { class: 'btn primary', onclick: next }, z.i + 1 < z.qs.length ? 'Question suivante' : 'Voir le score')));
+      feedback = h('div', { class: 'feedback ' + (ok ? 'ok' : 'ko') }, h('strong', null, ok ? 'Bonne réponse ! ' : 'Raté. '), q.expl);
+      dock = h('div', { class: 'dock' },
+        h('button', { class: 'btn primary big block', onclick: next }, z.i + 1 < z.qs.length ? 'Question suivante' : 'Voir le score'));
     }
 
     render(h('div', null,
-      h('h1', null, 'QCM'),
-      h('div', { class: 'toolbar' }, z.picker),
-      h('p', { class: 'muted' }, 'Question ' + (z.i + 1) + ' / ' + z.qs.length + ' · ' + ueLabel(q.ue)),
-      h('div', { class: 'flash-q quiz-q' }, q.q),
+      z.chips,
+      h('div', { class: 'progress-line' },
+        h('div', { class: 'bar' }, h('span', { style: 'width:' + pct + '%' })),
+        h('span', { class: 'muted' }, (z.i + 1) + '/' + z.qs.length)),
+      h('div', { class: 'flash-ue' }, ueLabel(q.ue)),
+      h('div', { class: 'quiz-q' }, q.q),
       h('div', { class: 'choices' }, opts),
-      feedback
-    ));
+      feedback, dock
+    ), true);
   }
 
   function pick(idx) {
     var q = quiz.qs[quiz.i];
     quiz.picked = idx;
     var rec = state.qcm[q.id] || { ok: 0, ko: 0 };
-    if (idx === q.answer) { quiz.score++; rec.ok++; } else { rec.ko++; }
+    if (idx === q.answer) { quiz.score++; rec.ok++; vibrate(10); } else { rec.ko++; vibrate(40); }
     state.qcm[q.id] = rec;
     logReview();
     save();
     renderQuestion();
+    var fb = app.querySelector('.feedback');
+    if (fb && fb.scrollIntoView) fb.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
-  function next() { quiz.i++; quiz.picked = null; renderQuestion(); }
+  function next() { quiz.i++; quiz.picked = null; renderQuestion(); window.scrollTo(0, 0); }
 
   function renderQuizEnd() {
     var z = quiz;
     quiz = null;
-    render(h('div', { class: 'center' },
+    render(h('div', { class: 'center end' },
+      h('div', { class: 'big-emoji' }, z.score === z.qs.length ? '🎯' : '📊'),
       h('h1', null, 'Score : ' + z.score + ' / ' + z.qs.length),
-      h('p', { class: 'muted' }, z.score === z.qs.length ? 'Sans faute 🎯' : 'Refais un QCM pour fixer les notions.'),
-      h('p', null,
-        h('a', { class: 'btn primary', href: '#/quiz' + (z.ue ? '?ue=' + z.ue : ''), onclick: function () { setTimeout(route, 0); } }, 'Nouveau QCM'), ' ',
-        h('a', { class: 'btn', href: '#/' }, 'Accueil'))
+      h('p', { class: 'muted' }, z.score === z.qs.length ? 'Sans faute !' : 'Refais un QCM pour fixer les notions.'),
+      h('div', { class: 'stack' },
+        h('a', { class: 'btn primary big block', href: '#/quiz' + (z.ue ? '?ue=' + z.ue : ''), onclick: function () { setTimeout(route, 0); } }, 'Nouveau QCM'),
+        h('a', { class: 'btn block', href: '#/' }, 'Accueil'))
     ));
   }
 
@@ -366,18 +431,19 @@
 
   function viewCards() {
     var filterUe = params().ue || '';
+    if (filterUe && !UES[filterUe]) filterUe = '';
     var search = '';
 
     var list = h('div', { class: 'card-list' });
-    var filterSel = ueSelect('filter-ue', true, filterUe);
-    var searchBox = h('input', { type: 'search', placeholder: 'Rechercher…', 'aria-label': 'Rechercher une carte' });
+    var searchBox = h('input', { type: 'search', placeholder: 'Rechercher une carte…', 'aria-label': 'Rechercher une carte' });
 
     function renderList() {
       list.textContent = '';
       var term = search.toLowerCase();
-      var items = cardsFor(filterSel.value).filter(function (c) {
+      var items = cardsFor(filterUe).filter(function (c) {
         return !term || (c.q + ' ' + c.a).toLowerCase().indexOf(term) !== -1;
       });
+      list.appendChild(h('p', { class: 'muted small' }, items.length + ' carte' + (items.length > 1 ? 's' : '')));
       if (!items.length) list.appendChild(h('div', { class: 'card-empty' }, 'Aucune carte.'));
       items.forEach(function (c) {
         var custom = isCustom(c);
@@ -391,11 +457,10 @@
       });
     }
 
-    filterSel.addEventListener('change', renderList);
     searchBox.addEventListener('input', function () { search = searchBox.value; renderList(); });
 
-    // Formulaire d'ajout
-    var fUe = ueSelect('new-ue', false, filterUe || 9);
+    // Formulaire d'ajout (replié par défaut pour garder la liste accessible)
+    var fUe = ueSelect('new-ue', filterUe || 10);
     var fQ = h('textarea', { rows: 2, required: true, placeholder: 'Question (ex. Formule du BFR ?)' });
     var fA = h('textarea', { rows: 3, required: true, placeholder: 'Réponse' });
     var form = h('form', { class: 'form', onsubmit: function (e) {
@@ -407,10 +472,8 @@
       fQ.value = ''; fA.value = '';
       renderList();
       fQ.focus();
-    } },
-      h('h2', null, 'Ajouter une carte'),
-      fUe, fQ, fA,
-      h('button', { class: 'btn primary', type: 'submit' }, 'Ajouter'));
+    } }, fUe, fQ, fA, h('button', { class: 'btn primary big block', type: 'submit' }, 'Ajouter la carte'));
+    var add = h('details', { class: 'add' }, h('summary', null, '➕ Ajouter ma propre carte'), form);
 
     // Sauvegarde / import
     var fileInput = h('input', { type: 'file', accept: 'application/json', hidden: true });
@@ -432,16 +495,17 @@
       r.readAsText(f);
     });
 
-    var tools = h('div', { class: 'toolbar' },
-      h('button', { class: 'btn', onclick: exportData }, 'Exporter ma sauvegarde'),
-      h('button', { class: 'btn', onclick: function () { fileInput.click(); } }, 'Importer'),
-      fileInput,
-      h('button', { class: 'btn danger', onclick: resetProgress }, 'Réinitialiser la progression'));
+    var tools = h('details', { class: 'add' },
+      h('summary', null, '💾 Sauvegarde et réinitialisation'),
+      h('div', { class: 'stack' },
+        h('button', { class: 'btn block', onclick: exportData }, 'Exporter ma sauvegarde'),
+        h('button', { class: 'btn block', onclick: function () { fileInput.click(); } }, 'Importer une sauvegarde'),
+        fileInput,
+        h('button', { class: 'btn block danger', onclick: resetProgress }, 'Réinitialiser la progression')));
 
     render(h('div', null,
-      h('h1', null, 'Mes cartes'),
-      h('div', { class: 'toolbar' }, filterSel, searchBox),
-      list, form, h('h2', null, 'Sauvegarde'), tools));
+      ueChips(filterUe, goUe('#/cards')),
+      searchBox, add, list, tools));
     renderList();
   }
 
