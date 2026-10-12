@@ -196,7 +196,7 @@ textarea { resize: vertical; }
 .form { display: grid; gap: 10px; margin-top: 12px; }
 details.add { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 14px; margin-bottom: 12px; }
 details.add[open] { padding-bottom: 14px; }
-details.add summary { min-height: 52px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+details.add summary { min-height: 52px; padding: 8px 0; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
 
 /* Tablette / ordinateur : un peu d'air, raccourcis clavier visibles */
 @media (min-width: 700px) {
@@ -289,7 +289,7 @@ a.row.link::after { content: '›'; color: var(--muted); font-size: 1.4rem; line
 .case-q { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; display: grid; gap: 10px; justify-items: start; }
 .case-a { background: var(--bg); border-radius: 12px; padding: 4px 14px; width: 100%; user-select: text; -webkit-user-select: text; }
 .case-a p { margin: 8px 0; white-space: pre-wrap; }
-.dock.grades.two { grid-template-columns: 1fr 1fr; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
 
 /* Épreuves et planning */
 .exam-body { display: grid; gap: 10px; }

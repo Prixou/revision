@@ -66,7 +66,7 @@ function detail(ctx, c) {
       c.conseil ? h('div', { class: 'info' }, h('strong', null, '💡 Pièges et conseils'), h('div', null, c.conseil)) : null,
       h('h2', null, 'Bilan'),
       r ? h('p', { class: 'muted' }, 'Dernier essai : ' + (r.ok ? 'réussi' : 'à retravailler') + ' · ' + r.tries + ' essai' + (r.tries > 1 ? 's' : '')) : null,
-      h('div', { class: 'dock grades two' },
+      h('div', { class: 'duo' },
         h('button', { class: 'btn again', onclick: () => mark(false) }, '🔁 À retravailler'),
         h('button', { class: 'btn good', onclick: () => mark(true) }, '✅ Réussi'))), true);
   }

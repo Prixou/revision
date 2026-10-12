@@ -106,9 +106,13 @@ function checkItem(kind, it, where, { err, warn, noteIds, seenQ }) {
       (it.notes || []).forEach((n) => { if (!noteIds.has(n)) err(where + ' : fiche liée introuvable (' + n + ')'); });
       break;
     }
-    case 'glossary':
-      if (!isStr(it.term) || !isStr(it.def)) err(where + ' : term/def manquant');
+    case 'glossary': {
+      if (!isStr(it.term) || !isStr(it.def)) { err(where + ' : term/def manquant'); break; }
+      const k = 'g:' + norm(it.term);
+      if (seenQ.has(k)) err(where + ' : terme en double avec ' + seenQ.get(k));
+      else seenQ.set(k, it.id);
       break;
+    }
   }
 }
 

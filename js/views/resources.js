@@ -21,7 +21,7 @@ export function resourcesView(ctx, params) {
     const q = box.value.trim();
     if (q) location.hash = hrefs.search(q);
   } });
-  const box = h('input', { type: 'search', placeholder: 'Rechercher partout (fiches, cartes, lexique…)', 'aria-label': 'Recherche globale' });
+  const box = h('input', { type: 'search', placeholder: 'Rechercher partout…', 'aria-label': 'Recherche globale' });
   form.appendChild(box);
 
   ctx.render(h('div', null,
