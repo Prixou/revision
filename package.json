@@ -1,0 +1,13 @@
+{
+  "name": "revision-dcg",
+  "private": true,
+  "type": "module",
+  "description": "Application de révision du DCG (PWA statique, sans dépendance).",
+  "scripts": {
+    "check": "node tools/check.js",
+    "build": "node tools/build.js",
+    "test": "node --test tests/*.test.js",
+    "stats": "node tools/stats.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
