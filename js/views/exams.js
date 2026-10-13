@@ -48,7 +48,7 @@ export function examsView(ctx) {
       h('div', { class: 'exam-body' },
         ep.intitule ? h('p', null, h('strong', null, ep.intitule)) : null,
         rows,
-        ep.certitude === 'a_verifier' ? h('p', { class: 'muted small' }, '⚠️ Informations à confirmer sur le site officiel de ton établissement ou de l\'Ordre.') : null,
+        ep.certitude && ep.certitude !== 'confirme' ? h('p', { class: 'muted small' }, '⚠️ Durée à confirmer sur la notice officielle de ton établissement (arrêté du 4 août 2025, annexe).') : null,
         ep.format_sujets ? h('p', null, h('strong', null, 'Format des sujets : '), ep.format_sujets) : null,
         (ep.conseils || []).length ? h('div', null, h('strong', null, 'Conseils de méthode'), h('ul', { class: 'syn-list' }, ep.conseils.map((c) => h('li', null, c)))) : null,
         h('label', { class: 'date-field' }, 'Date de mon épreuve ', input),

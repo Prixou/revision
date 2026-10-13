@@ -1,5 +1,5 @@
 {
- "version": "9023796451",
+ "version": "6ac8127279",
  "shell": [
   "./",
   "index.html",
@@ -35,6 +35,8 @@
  ],
  "files": [
   "data/meta.json",
+  "data/epreuves.json",
+  "data/links.json",
   "data/ue2/notes.json",
   "data/ue2/cards.json",
   "data/ue2/qcm.json",

@@ -1,0 +1,98 @@
+{
+ "2": {
+  "intitule": "Épreuve n° 2 - Droit des affaires",
+  "nature": "Écrite : une ou plusieurs situations pratiques, commentaire de documents et/ou questions.",
+  "duree": "3 heures",
+  "coefficient": "1",
+  "premiere_session": "Session 2027 (programme réformé de l'arrêté du 4 août 2025) ; la session 2026 était la dernière sur l'ancien programme.",
+  "certitude": "confirme",
+  "format_sujets": "Le sujet zéro 2027 compte deux dossiers indépendants (14 et 6 points) ; la méthode du cas pratique est attendue : problème de droit, règle, application aux faits, conclusion.",
+  "conseils": [
+   "Commence par lire l'annexe officielle du BO n° 32 (UE 2) et coche chaque chapitre : le programme a changé (fonds de commerce, bail commercial et droit pénal entrent ; entreprises en difficulté, GIE et groupes sortent) et les annales d'avant 2027 ne reflètent plus le périmètre.",
+   "Applique à chaque question de cas pratique la méthode en trois temps : (1) problème de droit en une phrase, (2) règle de droit avec l'article ou la jurisprudence, (3) application aux faits du sujet puis conclusion tranchée. Les corrigés valorisent surtout l'application et la conclusion.",
+   "Cite systématiquement le fondement textuel (articles du Code civil, du Code de commerce, du Code pénal) ; apprends par coeur les articles clés (1832, 1833, 1843, L. 223-18, L. 225-35, L. 227-1, L. 223-19...), après vérification sur Légifrance.",
+   "Gère les 3 heures en répartissant le temps au prorata des points de chaque dossier (par exemple 14 points = environ 2 h, 6 points = environ 1 h pour le sujet zéro) ; lis tout le sujet avant de commencer et commence par le dossier où tu es le plus sûr.",
+   "Fais des tableaux de synthèse comparatifs (formes sociales, majorités, organes de direction, infractions et peines) et refais-les de mémoire chaque semaine : c'est le support le plus rentable de cette UE."
+  ]
+ },
+ "4": {
+  "intitule": "Épreuve n° 4 - Droit fiscal",
+  "nature": "Écrite, notée sur 20.",
+  "duree": "3 heures",
+  "coefficient": "1",
+  "premiere_session": "Session 2027 (programme réformé de l'arrêté du 4 août 2025) ; la session 2026 était la dernière sur l'ancien programme.",
+  "certitude": "confirme",
+  "format_sujets": "Trois dossiers indépendants dans l'ordre habituel : TVA, impôt sur les sociétés, impôt sur le revenu. Sessions 2023 à 2025 : environ 6 à 9 points pour la TVA et pour l'IS, 3 à 5 points pour l'IR (sources secondaires).",
+  "conseils": [
+   "Lis le programme officiel (annexe 1 de l'arrêté du 4 août 2025) et confirme les crédits ECTS et le périmètre exact avant de réviser les thèmes de niche (contrôle fiscal, mère-fille, intégration fiscale, assurance-vie).",
+   "Raisonne toujours en syllogisme juridique : énonce la règle (avec l'article du CGI ou la référence du BOFiP quand tu la connais), applique-la aux faits du dossier, puis conclus. Le jury ne donne pas tous les points à une réponse juste sans justification.",
+   "Répartis ton temps proportionnellement aux points : environ 3 h pour 20 points, soit 9 minutes par point. Lis les trois dossiers en 10 minutes, commence par celui que tu maîtrises le mieux (souvent la TVA), garde 10 minutes de relecture.",
+   "Priorité de révision : TVA (liquidation, droit à déduction, territorialité, régularisations), puis passage du résultat comptable au résultat fiscal et IS, puis IR (foyer fiscal, frais réels, revenus fonciers). Ces thèmes concentrent l'essentiel des points d'après les corrigés.",
+   "Présente chaque calcul avec son détail (base, taux, résultat) et pose des tableaux clairs (TVA collectée / déductible, réintégrations / déductions). Équilibre les écritures et vérifie les arrondis : le jury signale des étourderies de calcul."
+  ]
+ },
+ "6": {
+  "intitule": "Épreuve n° 6 - Finance d'entreprise",
+  "nature": "Écrite : situations pratiques, avec le cas échéant des questions.",
+  "duree": "3 heures",
+  "coefficient": "1",
+  "premiere_session": "Session 2027 (programme réformé de l'arrêté du 4 août 2025) ; la session 2026 était la dernière sur l'ancien programme.",
+  "certitude": "probable",
+  "format_sujets": "Beaucoup de calculs suivis de commentaires argumentés. Le sujet zéro 2027 compte quatre dossiers indépendants (diagnostic, investissement, financement, trésorerie), structure non obligatoire.",
+  "conseils": [
+   "Commencer par lire l'annexe 1 de l'arrêté du 4 août 2025 (BO n° 32) puis la partie UE 6 du guide pédagogique du ministère et faire le sujet zéro 2027 en conditions réelles (3 heures) avant d'attaquer les annales.",
+   "Répartir le temps proportionnellement aux points de chaque dossier et garder environ 10 minutes en fin d'épreuve pour relire ; ne pas s'acharner sur un calcul bloquant, passer au suivant et revenir.",
+   "Poser chaque formule avant de l'appliquer, indiquer les unités (k euros, jours, %) et conserver les détails de calcul : les points sont attribués sur la démarche, même si le résultat final est faux.",
+   "Toujours conclure par un commentaire argumenté et contextualisé (secteur, taille de l'entreprise, TPE ou services) : les rapports de jury insistent sur les conclusions déconnectées de la situation ; la réforme accroît la part de l'interprétation.",
+   "Pour le diagnostic, suivre l'ordre activité, rentabilité, risque, structure financière, trésorerie puis rédiger une synthèse finale ; inclure les indicateurs ESG/extra-financiers fournis dans l'énoncé comme éléments d'analyse qualitative."
+  ]
+ },
+ "7": {
+  "intitule": "Épreuve n° 7 - Management des organisations",
+  "nature": "Écrite : analyse managériale d'une ou plusieurs situations et question problématisée.",
+  "duree": "4 heures (à confirmer)",
+  "coefficient": "1",
+  "premiere_session": "Session 2027 (programme réformé de l'arrêté du 4 août 2025) ; la session 2026 était la dernière sur l'ancien programme.",
+  "certitude": "a_verifier",
+  "format_sujets": "Session 2025 (source secondaire) : une analyse managériale sur un dossier d'organisation (environ 9 points) et une question problématisée sur un thème transversal (environ 11 points).",
+  "conseils": [
+   "Lire d'abord les questions, puis le dossier, en surlignant les éléments à exploiter ; s'appuyer sur le verbe de la consigne (identifier, caractériser, analyser, justifier, discuter) pour calibrer la réponse.",
+   "Répartir les 4 heures au prorata des points : environ 9/20 pour l'analyse managériale et 11/20 pour la question problématisée, soit environ 1h45 et 2h15 en gardant 10 minutes de relecture.",
+   "Contextualiser chaque réponse : citer des faits du dossier et éviter les développements généraux ; chaque affirmation doit être étayée par une théorie, un modèle ou un chiffre du cas.",
+   "Pour la question problématisée : accroche, définition des termes, problématique, annonce du plan en 2 ou 3 parties, développement avec auteurs et exemples, conclusion qui répond explicitement à la question.",
+   "Maîtriser les outils du diagnostic stratégique simplifié (PESTEL, Porter, ressources et compétences, chaîne de valeur, SWOT, canvas) et savoir les appliquer à un cas, plutôt que les réciter."
+  ]
+ },
+ "10": {
+  "intitule": "Épreuve n° 10 - Comptabilité approfondie",
+  "nature": "Écrite : situations pratiques, avec le cas échéant des questions.",
+  "duree": "3 heures",
+  "coefficient": "1",
+  "premiere_session": "Session 2027 (programme réformé de l'arrêté du 4 août 2025) ; la session 2026 était la dernière sur l'ancien programme.",
+  "certitude": "probable",
+  "format_sujets": "En général 2 à 3 dossiers indépendants mêlant écritures comptables, calculs (coût d'entrée, amortissements, dépréciations, capital) et courtes justifications.",
+  "conseils": [
+   "Vérifier systématiquement la durée (3 h) et la notice du sujet; répartir le temps en 3 blocs selon les points des dossiers, environ 1 point = 9 minutes.",
+   "Lire tout le sujet, repérer les dossiers indépendants et commencer par celui où les points sont les plus sûrs; ne jamais laisser une question vide, les points se gagnent par étapes.",
+   "Présenter chaque écriture avec date, numéros de comptes, libellés, débit/crédit et montants justifiés; mettre les calculs en annexe visible pour obtenir les points même en cas d'erreur de reprise.",
+   "Justifier le traitement par une phrase courte citant le critère PCG (définition de l'actif, obligation probable, etc.), car le programme réformé est évalué par compétences.",
+   "Réviser tout le programme: le jury rappelle qu'aucun thème ne doit être laissé de côté (réévaluation libre et BSO en 2025 étaient peu préparés)."
+  ]
+ },
+ "11": {
+  "intitule": "Épreuve n° 11 - Contrôle de gestion",
+  "nature": "Écrite : situations permettant d'analyser plusieurs problématiques de gestion.",
+  "duree": "4 heures (à confirmer)",
+  "coefficient": "1",
+  "premiere_session": "Session 2027 (programme réformé de l'arrêté du 4 août 2025) ; la session 2026 était la dernière sur l'ancien programme.",
+  "certitude": "a_verifier",
+  "format_sujets": "En général quatre dossiers indépendants d'environ 5 points chacun, avec annexes, sur des missions de contrôleur de gestion ; plus de la moitié des points sur des questions rédactionnelles (session 2025, sources secondaires).",
+  "conseils": [
+   "Commencer par lire le guide pédagogique de juillet 2026 (section UE 11) et son sujet zéro : c'est la meilleure indication du niveau et de la forme attendus pour 2027, tout en gardant en tête que les sujets réels pourront en différer.",
+   "Se préparer à 4 dossiers indépendants de 5 points : lire tout le sujet en 10 à 15 minutes, repérer les dossiers que l'on maîtrise et commencer par eux. Répartir le temps proportionnellement aux points, soit environ 1 h par dossier de 5 points sur 4 h (si la durée de 4 h est confirmée).",
+   "Soigner la rédaction : en 2025, plus de la moitié des points viennent de questions rédactionnelles et l'argumentaire pèse 36 % du dossier coûts. Répondre par des phrases complètes, structurées (constat, interprétation, recommandation), avec une conclusion chiffrée.",
+   "Montrer ses calculs et les formules utilisées, laisser les résultats intermédiaires lisibles : le barème valide chaque élément attendu et les erreurs de report sont généralement sanctionnées une seule fois.",
+   "Maîtriser le socle de calcul le plus fréquent : coûts complets (centres d'analyse, ABC), seuil de rentabilité, écarts (matières, main-d'œuvre, masse salariale, ventes). Compta Online chiffre les coûts à 92 % des sujets 2014-2025 et les écarts à 62 % (source unique)."
+  ]
+ }
+}

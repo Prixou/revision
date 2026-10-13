@@ -187,7 +187,7 @@
   {"id":"f7-186","ue":7,"q":"Que signifie CRM ?","a":"Gestion de la relation client.","n":"ue7-156"},
   {"id":"f7-187","ue":7,"q":"RGPD : numéro du règlement ?","a":"Règlement (UE) 2016/679.","n":"ue7-157"},
   {"id":"f7-188","ue":7,"q":"RGPD : applicable depuis ?","a":"Le 25 mai 2018.","n":"ue7-157"},
-  {"id":"f7-189","ue":7,"q":"Sanction maximale du RGPD ?","a":"20 M€ ou 4 % du CA mondial.","n":"ue7-157"},
+  {"id":"f7-189","ue":7,"q":"Sanction maximale du RGPD ?","a":"Jusqu'à 20 M€ ou 4 % du CA mondial annuel (le montant le plus élevé) ; 10 M€ ou 2 % pour les manquements moins graves.","n":"ue7-157","d":"RGPD, art. 83 §4 et §5 (confirmé sur cnil.fr, chapitre VIII)"},
   {"id":"f7-190","ue":7,"q":"Citer 4 droits des personnes (RGPD).","a":"Accès, rectification, effacement, opposition (limitation, portabilité).","n":"ue7-157"},
   {"id":"f7-191","ue":7,"q":"Autorité française de protection des données ?","a":"La CNIL.","n":"ue7-157"},
   {"id":"f7-192","ue":7,"q":"Que signifie DIC en sécurité informatique ?","a":"Disponibilité, Intégrité, Confidentialité.","n":"ue7-158"},
