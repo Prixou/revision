@@ -63,7 +63,7 @@
   {"id":"f6-062","ue":6,"q":"Qu'est-ce que la taxonomie européenne ?","a":"Classification des activités économiques durables (règlement (UE) 2020/852).","n":"ue6-117"},
   {"id":"f6-063","ue":6,"q":"Trois conditions d'une activité alignée sur la taxonomie ?","a":"Contribution substantielle, absence de préjudice important (DNSH), garanties sociales minimales.","n":"ue6-117"},
   {"id":"f6-064","ue":6,"q":"Combien d'objectifs environnementaux compte la taxonomie ?","a":"6.","n":"ue6-118"},
-  {"id":"f6-065","ue":6,"q":"Citer 3 des 6 objectifs de la taxonomie.","a":"Atténuation du changement climatique, adaptation, économie circulaire (eau, pollution, biodiversité).","n":"ue6-118"},
+  {"id":"f6-065","ue":6,"q":"Citer 3 des 6 objectifs de la taxonomie.","a":"Les 6 objectifs : atténuation du changement climatique ; adaptation au changement climatique ; utilisation durable et protection de l'eau et des ressources marines ; transition vers une économie circulaire ; prévention et réduction de la pollution ; protection et restauration de la biodiversité et des écosystèmes.","n":"ue6-118"},
   {"id":"f6-066","ue":6,"q":"Que signifie DNSH ?","a":"Do No Significant Harm : ne pas causer de préjudice important aux autres objectifs.","n":"ue6-117"},
   {"id":"f6-067","ue":6,"q":"Citer 3 indicateurs sociaux d'un diagnostic ESG.","a":"Taux de fréquence des accidents, turn-over, parité (formation).","n":"ue6-119"},
   {"id":"f6-068","ue":6,"q":"Citer 3 types d'investissements.","a":"Corporels, incorporels, financiers.","n":"ue6-120"},
@@ -295,6 +295,6 @@
   {"id":"f6-245","ue":6,"q":"Taux de rentabilité d'un investissement : lien avec le coût du capital ?","a":"Il doit dépasser le coût du capital (CMPC) pour créer de la valeur.","n":"ue6-21"},
   {"id":"f6-246","ue":6,"q":"Qu'est-ce que la capacité d'endettement ?","a":"Montant maximal de dettes supportable par l'entreprise selon sa CAF et sa structure.","n":"ue6-08"},
   {"id":"f6-247","ue":6,"q":"Qu'est-ce que le rating (notation) ?","a":"Évaluation du risque de défaut d'un emprunteur par une agence ou une banque.","n":"ue6-158"},
-  {"id":"f6-248","ue":6,"q":"Citer 3 critères extra-financiers d'un diagnostic.","a":"Émissions de CO2, parité, turn-over (accidents, gouvernance).","n":"ue6-119"},
+  {"id":"f6-248","ue":6,"q":"Citer 3 critères extra-financiers d'un diagnostic.","a":"Un critère par pilier ESG, par exemple : environnemental (émissions de CO2) ; social (parité femmes-hommes dans les effectifs, turn-over, accidents du travail) ; gouvernance (indépendance et parité du conseil, rémunération des dirigeants).","n":"ue6-119"},
   {"id":"f6-249","ue":6,"q":"Qu'est-ce que le financement vert ?","a":"Financement dont l'usage ou le coût est lié à des objectifs environnementaux.","n":"ue6-137"}
 ]
