@@ -1,5 +1,5 @@
 {
- "version": "2d9eea9e6b",
+ "version": "6f259530ea",
  "shell": [
   "./",
   "index.html",
@@ -54,6 +54,9 @@
   "data/ue10/qcm.json",
   "data/ue11/notes.json",
   "data/ue11/cards.json",
-  "data/ue11/qcm.json"
+  "data/ue11/qcm.json",
+  "data/ue11/cases.json",
+  "data/ue11/synth.json",
+  "data/ue11/glossary.json"
  ]
 }

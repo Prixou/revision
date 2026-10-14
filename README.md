@@ -14,10 +14,10 @@ dans le navigateur (`localStorage`) et l'app fonctionne hors ligne une fois ouve
 | 6 | Finance d'entreprise | 298 | 86 | 41 | 0 | 0 | 0 |
 | 7 | Management des organisations | 304 | 100 | 36 | 0 | 0 | 0 |
 | 10 | Comptabilité approfondie | 341 | 88 | 35 | 0 | 0 | 0 |
-| 11 | Contrôle de gestion | 268 | 90 | 50 | 0 | 0 | 0 |
-| | **Total** | **1878** | **556** | **241** | **0** | **0** | **0** |
+| 11 | Contrôle de gestion | 341 | 96 | 95 | 9 | 10 | 80 |
+| | **Total** | **1951** | **562** | **286** | **9** | **10** | **80** |
 
-Types de flashcards : 1231 questions, 276 à trous, 210 calculs, 79 écritures et méthodes, 82 formules.
+Types de flashcards : 1255 questions, 284 à trous, 242 calculs, 82 écritures et méthodes, 88 formules.
 <!-- stats:end -->
 
 ## Utiliser sur téléphone
