@@ -80,6 +80,7 @@ export function homeView(ctx) {
     ? h('div', { class: 'info' },
         h('strong', null, '📅 Contenu vérifié le ' + meta.verifiedOn),
         h('div', null, meta.programme),
+        meta.verificationNote ? h('div', null, meta.verificationNote) : null,
         h('div', null, 'Les points chiffrés qui changent avec les années portent une pastille 📅 avec la date de la règle.'))
     : null;
 
