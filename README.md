@@ -9,15 +9,15 @@ dans le navigateur (`localStorage`) et l'app fonctionne hors ligne une fois ouve
 <!-- stats:start -->
 | UE | Matière | Flashcards | Fiches de cours | QCM | Cas pratiques | Synthèses | Lexique |
 |----|---------|-----------:|----------------:|----:|--------------:|----------:|--------:|
-| 2 | Droit des affaires | 345 | 107 | 39 | 0 | 0 | 0 |
-| 4 | Droit fiscal | 322 | 85 | 40 | 0 | 0 | 0 |
-| 6 | Finance d'entreprise | 298 | 86 | 41 | 0 | 0 | 0 |
-| 7 | Management des organisations | 304 | 100 | 36 | 0 | 0 | 0 |
-| 10 | Comptabilité approfondie | 341 | 88 | 35 | 0 | 0 | 0 |
+| 2 | Droit des affaires | 419 | 107 | 83 | 6 | 10 | 79 |
+| 4 | Droit fiscal | 389 | 85 | 84 | 9 | 10 | 80 |
+| 6 | Finance d'entreprise | 375 | 86 | 86 | 6 | 10 | 80 |
+| 7 | Management des organisations | 374 | 105 | 81 | 9 | 10 | 79 |
+| 10 | Comptabilité approfondie | 394 | 88 | 68 | 5 | 7 | 69 |
 | 11 | Contrôle de gestion | 341 | 96 | 95 | 9 | 10 | 80 |
-| | **Total** | **1951** | **562** | **286** | **9** | **10** | **80** |
+| | **Total** | **2292** | **567** | **497** | **44** | **57** | **467** |
 
-Types de flashcards : 1255 questions, 284 à trous, 242 calculs, 82 écritures et méthodes, 88 formules.
+Types de flashcards : 1479 questions, 309 à trous, 300 calculs, 98 écritures et méthodes, 106 formules.
 <!-- stats:end -->
 
 ## Utiliser sur téléphone
@@ -99,3 +99,5 @@ commercial), CSRD après Omnibus, AI Act…
 
 Il a été rédigé **sans tes cours** : confronte-le à ton programme et à ton enseignant. Les points signalés « à vérifier » le sont
 parce qu'une source officielle n'a pas pu être consultée directement.
+
+Les ressources ajoutées en dernier (cas pratiques, synthèses, glossaire, cartes et QCM complémentaires) ont eu une vérification plus légère : relecture indépendante, recalcul des montants et contrôle contre le contenu déjà vérifié, avec au plus quelques recherches officielles par UE. Recoupe-les avec ton cours avant de t'y fier pour un chiffre ou un seuil.
